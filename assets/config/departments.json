@@ -1,0 +1,66 @@
+[
+  {
+    "id": "lobby",
+    "floor": 1,
+    "name": "Front Lobby",
+    "flavor": "Where weary couriers first arrive — and where the chandelier hasn't been dusted in a century.",
+    "restoreCost": 250,
+    "unlocks": { "cosmetic": "lobby_lights" }
+  },
+  {
+    "id": "fragile_room",
+    "floor": 1,
+    "name": "Fragile Wing",
+    "flavor": "The parcels here weep softly when shaken.",
+    "restoreCost": 600,
+    "unlocks": { "packageType": "fragile" }
+  },
+  {
+    "id": "cold_storage",
+    "floor": 2,
+    "name": "Cold Storage",
+    "flavor": "Frost glitters on every shelf. Some boxes hum back.",
+    "restoreCost": 1100,
+    "unlocks": { "packageType": "frozen" }
+  },
+  {
+    "id": "intern_pool",
+    "floor": 2,
+    "name": "Intern Pool",
+    "flavor": "Most never made it home, but they still file paperwork.",
+    "restoreCost": 1600,
+    "unlocks": { "upgradeKind": "autoSorter" }
+  },
+  {
+    "id": "review_desk",
+    "floor": 3,
+    "name": "Review Desk",
+    "flavor": "Mislabeled parcels get a second opinion here.",
+    "restoreCost": 2200,
+    "unlocks": { "packageType": "mislabeled" }
+  },
+  {
+    "id": "incinerator",
+    "floor": 3,
+    "name": "Incinerator",
+    "flavor": "Decaying mail ends here. So do most clipboards.",
+    "restoreCost": 3000,
+    "unlocks": { "packageType": "decaying" }
+  },
+  {
+    "id": "vault",
+    "floor": 4,
+    "name": "Sealed Vault",
+    "flavor": "The seal on the door predates the postal service itself.",
+    "restoreCost": 4500,
+    "unlocks": { "modifier": "doubleStamps" }
+  },
+  {
+    "id": "void_chamber",
+    "floor": 5,
+    "name": "Void Chamber",
+    "flavor": "Ghost mail finally has somewhere to drift.",
+    "restoreCost": 7000,
+    "unlocks": { "packageType": "ghost" }
+  }
+]

@@ -1,0 +1,11 @@
+{
+  "tutorialShift": {
+    "durationMs": 60000,
+    "spawnIntervalMs": 2200,
+    "targetScore": 200,
+    "allowedTypes": ["standard", "priority"],
+    "allowedHazards": [],
+    "maxConcurrentPackages": 3,
+    "beltSpeedMultiplier": 0.85
+  }
+}

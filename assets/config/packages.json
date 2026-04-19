@@ -1,0 +1,82 @@
+[
+  {
+    "type": "standard",
+    "baseScore": 30,
+    "baseSpeed": 90.0,
+    "fragility": 0.0,
+    "canStamp": false,
+    "timedDecay": false,
+    "lane": "north",
+    "colorHex": "#A7B0BD"
+  },
+  {
+    "type": "priority",
+    "baseScore": 60,
+    "baseSpeed": 95.0,
+    "fragility": 0.0,
+    "canStamp": true,
+    "timedDecay": false,
+    "lane": "vault",
+    "colorHex": "#F5C04A"
+  },
+  {
+    "type": "fragile",
+    "baseScore": 75,
+    "baseSpeed": 70.0,
+    "fragility": 0.9,
+    "canStamp": false,
+    "timedDecay": false,
+    "lane": "south",
+    "colorHex": "#F08A6E"
+  },
+  {
+    "type": "frozen",
+    "baseScore": 80,
+    "baseSpeed": 60.0,
+    "fragility": 0.2,
+    "canStamp": false,
+    "timedDecay": true,
+    "lane": "cold",
+    "colorHex": "#7BD3F6"
+  },
+  {
+    "type": "ghost",
+    "baseScore": 120,
+    "baseSpeed": 110.0,
+    "fragility": 0.0,
+    "canStamp": true,
+    "timedDecay": false,
+    "lane": "void",
+    "colorHex": "#D7C8FF"
+  },
+  {
+    "type": "mislabeled",
+    "baseScore": 45,
+    "baseSpeed": 95.0,
+    "fragility": 0.1,
+    "canStamp": true,
+    "timedDecay": false,
+    "lane": "review",
+    "colorHex": "#9F8AC2"
+  },
+  {
+    "type": "duplicate",
+    "baseScore": 20,
+    "baseSpeed": 95.0,
+    "fragility": 0.0,
+    "canStamp": false,
+    "timedDecay": false,
+    "lane": "shred",
+    "colorHex": "#7E8B5A"
+  },
+  {
+    "type": "decaying",
+    "baseScore": 90,
+    "baseSpeed": 100.0,
+    "fragility": 0.3,
+    "canStamp": false,
+    "timedDecay": true,
+    "lane": "incinerator",
+    "colorHex": "#6FBD8E"
+  }
+]

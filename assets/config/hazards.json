@@ -1,0 +1,38 @@
+[
+  {
+    "kind": "beltJam",
+    "durationMs": 4000,
+    "severity": 0.4,
+    "tutorialHint": "Tap the red light to clear the jam."
+  },
+  {
+    "kind": "powerFlicker",
+    "durationMs": 2500,
+    "severity": 0.5,
+    "tutorialHint": "Lights flicker — gates lock briefly."
+  },
+  {
+    "kind": "misrouteChain",
+    "durationMs": 3500,
+    "severity": 0.6,
+    "tutorialHint": "Recent misroutes daisy-chain. Re-aim fast."
+  },
+  {
+    "kind": "surgeRush",
+    "durationMs": 5000,
+    "severity": 0.7,
+    "tutorialHint": "Spawn rate spikes. Prioritise gold parcels."
+  },
+  {
+    "kind": "blackout",
+    "durationMs": 6000,
+    "severity": 0.8,
+    "tutorialHint": "Lights out — only silhouettes remain."
+  },
+  {
+    "kind": "vipWave",
+    "durationMs": 5000,
+    "severity": 0.6,
+    "tutorialHint": "VIP wave: only priority + ghost parcels appear."
+  }
+]

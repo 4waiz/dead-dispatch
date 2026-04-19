@@ -1,0 +1,74 @@
+[
+  {
+    "kind": "beltSpeedTolerance",
+    "maxLevel": 5,
+    "title": "Greased Bearings",
+    "description": "Belts feel slower at higher difficulty.",
+    "costs": [120, 240, 480, 900, 1600],
+    "effects": [1, 2, 3, 4, 5],
+    "currency": "coins"
+  },
+  {
+    "kind": "comboGrace",
+    "maxLevel": 3,
+    "title": "Forgiving Foreman",
+    "description": "First miss per shift doesn't drop your combo.",
+    "costs": [180, 360, 720],
+    "effects": [1, 2, 3],
+    "currency": "coins"
+  },
+  {
+    "kind": "stampSupply",
+    "maxLevel": 4,
+    "title": "Ink Reserves",
+    "description": "Carry more priority stamps per shift.",
+    "costs": [100, 220, 440, 880],
+    "effects": [3, 5, 7, 10],
+    "currency": "coins"
+  },
+  {
+    "kind": "fragileShield",
+    "maxLevel": 3,
+    "title": "Padded Liners",
+    "description": "Fragile parcels survive one extra bump.",
+    "costs": [200, 400, 800],
+    "effects": [1, 2, 3],
+    "currency": "coins"
+  },
+  {
+    "kind": "payoutMultiplier",
+    "maxLevel": 5,
+    "title": "Union Negotiation",
+    "description": "+10% coin payout per level at end of shift.",
+    "costs": [250, 500, 1000, 2000, 4000],
+    "effects": [0.10, 0.20, 0.30, 0.40, 0.50],
+    "currency": "coins"
+  },
+  {
+    "kind": "hazardWarning",
+    "maxLevel": 2,
+    "title": "Telegraph",
+    "description": "Hazards announce themselves earlier.",
+    "costs": [300, 600],
+    "effects": [0.5, 1.0],
+    "currency": "coins"
+  },
+  {
+    "kind": "autoSorter",
+    "maxLevel": 3,
+    "title": "Phantom Intern",
+    "description": "Standard mail occasionally self-sorts.",
+    "costs": [400, 800, 1600],
+    "effects": [0.10, 0.20, 0.30],
+    "currency": "coins"
+  },
+  {
+    "kind": "ghostBeacon",
+    "maxLevel": 2,
+    "title": "Spectral Lantern",
+    "description": "Ghost mail glows brighter and lingers longer.",
+    "costs": [350, 700],
+    "effects": [0.25, 0.5],
+    "currency": "coins"
+  }
+]

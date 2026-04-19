@@ -1,0 +1,32 @@
+{
+  "shifts": {
+    "baseDurationMs": 75000,
+    "baseSpawnIntervalMs": 1800,
+    "minSpawnIntervalMs": 550,
+    "spawnIntervalDecayPerLevelMs": 60,
+    "baseTargetScore": 600,
+    "targetScoreGrowth": 1.18,
+    "unlockOrder": [
+      "standard",
+      "priority",
+      "fragile",
+      "frozen",
+      "mislabeled",
+      "duplicate",
+      "decaying",
+      "ghost"
+    ],
+    "maxConcurrentBase": 4,
+    "maxConcurrentGrowthEvery": 3
+  },
+  "economy": {
+    "coinPerScorePoint": 0.10,
+    "perfectBonus": 25,
+    "comboMultiplierStep": 0.05,
+    "comboMultiplierCap": 3.0,
+    "dailyCompletionBonus": 100,
+    "failureForgivenessRefund": 0.5,
+    "mysteryParcelMin": 50,
+    "mysteryParcelMax": 250
+  }
+}

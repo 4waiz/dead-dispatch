@@ -1,0 +1,46 @@
+name: dead_dispatch
+description: Dead Dispatch — a hybrid-casual puzzle/management game set in a haunted postal sorting office.
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+  flutter: ">=3.22.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Game engine
+  flame: ^1.18.0
+  flame_audio: ^2.10.0
+
+  # State / DI
+  flutter_riverpod: ^2.5.1
+
+  # Routing
+  go_router: ^14.2.0
+
+  # Persistence
+  shared_preferences: ^2.2.3
+
+  # Time (clock abstraction for deterministic tests)
+  clock: ^1.1.1
+
+  # Utility
+  collection: ^1.18.0
+  meta: ^1.12.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/config/
+    - assets/images/
+    - assets/audio/
