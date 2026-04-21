@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E '\\\\.\\(dart|json\\)$')",
+      "Bash(dart test *)",
+      "Bash(grep -E '\\\\.dart$')",
+      "Bash(flutter analyze *)"
+    ]
+  }
+}

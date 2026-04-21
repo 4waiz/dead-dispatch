@@ -12,7 +12,7 @@ class DebugFlags {
   static bool get showPerfOverlay => kDebugMode;
 
   /// Skip onboarding when launching directly into a level.
-  static bool get skipTutorial = false;
+  static bool get skipTutorial => false;
 
   /// Force a specific daily-challenge seed (for QA).
   static int? forcedDailySeed;

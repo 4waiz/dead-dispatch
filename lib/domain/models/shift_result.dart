@@ -27,6 +27,8 @@ class ShiftResult {
 
   int get perfects =>
       records.where((r) => r.outcome == SortOutcome.perfect).length;
+  int get acceptableCount =>
+      records.where((r) => r.outcome == SortOutcome.acceptable).length;
   int get misses => records.where((r) => r.outcome == SortOutcome.miss).length;
   int get destroyed =>
       records.where((r) => r.outcome == SortOutcome.destroyed).length;

@@ -18,6 +18,7 @@ class ScoreService {
   int get score => _score;
   int get combo => _combo;
   int get maxCombo => _maxCombo;
+  int get lastPoints => _records.isEmpty ? 0 : _records.last.scoreDelta;
   List<SortRecord> get records => List.unmodifiable(_records);
 
   double get comboMultiplier {

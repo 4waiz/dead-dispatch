@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../app/app_router.dart';
 
 import '../../../di/providers.dart';
 import '../../../l10n/strings_en.dart';
@@ -34,7 +37,7 @@ class _TutorialScreenState extends ConsumerState<TutorialScreen> {
       });
       await ref.read(playerProfileProvider.notifier).persist();
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/game');
+      context.pushReplacement(AppRoutes.brief);
     }
   }
 

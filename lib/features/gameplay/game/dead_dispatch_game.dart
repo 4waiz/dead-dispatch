@@ -1,38 +1,50 @@
-import 'package:flame/components.dart';
-import 'package:flame/events.dart';
 import 'package:flame/game.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
 
 import '../../../core/perf/perf_monitor.dart';
-import '../../../domain/models/shift_config.dart';
+import '../../../domain/balance/balance_data.dart';
+import '../../../domain/models/package.dart';
+import '../../../domain/services/routing_service.dart';
 import '../../../presentation/theme/colors.dart';
+import '../../../services/audio_service.dart';
+import '../../../services/haptics_service.dart';
+import 'components/background_component.dart';
+import 'components/belt_component.dart';
+import 'components/hazard_overlay_component.dart';
+import 'components/package_component.dart';
+import 'components/particle_burst.dart';
+import 'components/score_popup.dart';
+import 'game_session.dart';
+import 'systems/feedback_system.dart';
+import 'systems/hazard_system.dart';
+import 'systems/routing_system.dart';
+import 'systems/spawner_system.dart';
 
-/// Phase 1 Flame shell. Boots the game view, paints a placeholder stage,
-/// and exposes two callbacks the `GameScreen` wires up:
-///
-///   * [onRequestEnd]  — fires when the player taps the "End shift"
-///                       placeholder button. Phase 2 will replace this
-///                       with the real shift-timer flow.
-///   * [onFirstFrame]  — fires once after the initial render so the
-///                       HUD can start timers in sync with the engine.
-///
-/// Deliberately empty of gameplay systems — those stay in
-/// `../game_legacy/` until Phase 2 wires them back in. That keeps this
-/// file a small, obvious integration point.
-class DeadDispatchGame extends FlameGame with TapCallbacks {
+class DeadDispatchGame extends FlameGame {
   DeadDispatchGame({
-    required this.config,
+    required this.session,
+    required this.balance,
+    required this.audio,
+    required this.haptics,
     required this.perf,
-    required this.onRequestEnd,
-    required this.onFirstFrame,
+    required this.routingService,
   });
 
-  final ShiftConfig config;
+  final GameSession session;
+  final BalanceData balance;
+  final AudioService audio;
+  final HapticsService haptics;
   final PerfMonitor perf;
-  final VoidCallback onRequestEnd;
-  final VoidCallback onFirstFrame;
+  final RoutingService routingService;
 
-  bool _firedFirstFrame = false;
+  final List<PackageComponent> _packages = [];
+
+  late final SpawnerSystem spawner;
+  late final HazardSystem hazardSystem;
+  late final RoutingSystem routingSystem;
+  late final FeedbackSystem feedbackSystem;
+
+  int get activePackageCount => _packages.length;
 
   @override
   Color backgroundColor() => AppColors.background;
@@ -40,49 +52,104 @@ class DeadDispatchGame extends FlameGame with TapCallbacks {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    add(_PlaceholderStage());
+    add(BackgroundComponent());
+    add(BeltComponent());
+    add(HazardOverlayComponent());
+
+    spawner = SpawnerSystem(session: session, game: this);
+    hazardSystem = HazardSystem(session: session, game: this);
+    routingSystem = RoutingSystem(
+      session: session,
+      game: this,
+      routingService: routingService,
+    );
+    feedbackSystem = FeedbackSystem(
+      session: session,
+      audio: audio,
+      haptics: haptics,
+    );
+
+    session.start();
   }
 
   @override
   void update(double dt) {
     super.update(dt);
     perf.record(dt * 1000);
-    if (!_firedFirstFrame) {
-      _firedFirstFrame = true;
-      onFirstFrame();
+    session.tick(dt);
+    spawner.tick(dt);
+    hazardSystem.tick(dt);
+    routingSystem.tick(dt);
+
+    // Remove packages that have fully exited the right edge
+    for (var i = _packages.length - 1; i >= 0; i--) {
+      if (_packages[i].position.x > size.x + 80) {
+        _packages[i].removeFromParent();
+        _packages.removeAt(i);
+      }
+    }
+  }
+
+  void addPackage(PackageComponent component) {
+    _packages.add(component);
+    add(component);
+  }
+
+  /// Returns the first package that has reached the gate and is waiting.
+  PackageComponent? firstPackageAtGate() {
+    for (final p in _packages) {
+      if (p.status == PackageStatus.waiting) return p;
+    }
+    return null;
+  }
+
+  /// Marks the package as exiting, spawns a particle burst and score popup.
+  void resolvePackageComponent(int packageId, SortOutcome outcome) {
+    for (final p in _packages) {
+      if (p.pkg.id == packageId) {
+        p.status = PackageStatus.exiting;
+        final pos = p.position.clone();
+        add(ParticleBurst(center: pos, color: _colorForOutcome(outcome)));
+        add(
+          ScorePopup(
+            center: pos - Vector2(0, 30),
+            outcome: outcome,
+            points: session.score.lastPoints,
+          ),
+        );
+        return;
+      }
+    }
+  }
+
+  /// Called by the Flutter HUD when the player taps a lane button.
+  void onLaneTapped(String laneKey) => routingSystem.submitRouting(laneKey);
+
+  /// Called by the Flutter HUD stamp button.
+  void onStampTapped() {
+    final pending = session.pendingPackage;
+    if (pending == null) return;
+    if (session.consumeStamp(pending)) {
+      pending.stamped = true;
+    }
+  }
+
+  Color _colorForOutcome(SortOutcome outcome) {
+    switch (outcome) {
+      case SortOutcome.perfect:
+        return AppColors.accentGold;
+      case SortOutcome.acceptable:
+        return AppColors.accentOk;
+      case SortOutcome.miss:
+        return AppColors.accentDanger;
+      case SortOutcome.destroyed:
+        return const Color(0xFF444455);
     }
   }
 
   @override
-  void onTapUp(TapUpEvent event) => onRequestEnd();
-}
-
-/// Placeholder visual so the shell isn't just a black screen during
-/// Phase 1. Two horizontal bands evoke the real belt layout without
-/// committing to final geometry.
-class _PlaceholderStage extends Component with HasGameReference {
-  @override
-  void render(Canvas canvas) {
-    final size = game.size;
-    final stripe = Paint()..color = AppColors.surfaceHi;
-    final band = Paint()..color = AppColors.accentBelt;
-    canvas.drawRect(
-      Rect.fromLTWH(0, size.y * 0.48, size.x, 40),
-      band,
-    );
-    canvas.drawRect(
-      Rect.fromLTWH(0, size.y * 0.72, size.x, 40),
-      band,
-    );
-    for (double x = 0; x < size.x; x += 24) {
-      canvas.drawRect(
-        Rect.fromLTWH(x, size.y * 0.48 + 6, 12, 28),
-        stripe,
-      );
-      canvas.drawRect(
-        Rect.fromLTWH(x + 12, size.y * 0.72 + 6, 12, 28),
-        stripe,
-      );
-    }
+  void onRemove() {
+    feedbackSystem.dispose();
+    super.onRemove();
   }
 }

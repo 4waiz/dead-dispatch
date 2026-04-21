@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../app/app_router.dart';
 
 import '../../../di/providers.dart';
 import '../../../presentation/theme/colors.dart';
@@ -55,8 +58,12 @@ class ShiftBriefScreen extends ConsumerWidget {
               PrimaryButton(
                 label: 'Start shift',
                 icon: Icons.play_arrow,
-                onPressed: () => Navigator.of(context)
-                    .pushReplacementNamed('/game', arguments: dailyDateKey),
+                onPressed: () {
+                  final route = dailyDateKey != null
+                      ? '${AppRoutes.game}?daily=$dailyDateKey'
+                      : AppRoutes.game;
+                  context.pushReplacement(route);
+                },
               ),
             ],
           ),

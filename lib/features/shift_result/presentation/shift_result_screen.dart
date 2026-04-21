@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../app/app_router.dart';
 
 import '../../../di/providers.dart';
 import '../../../domain/models/currency.dart';
@@ -160,8 +163,7 @@ class _ShiftResultScreenState extends ConsumerState<ShiftResultScreen> {
               const SizedBox(height: 8),
               PrimaryButton(
                 label: 'Continue',
-                onPressed: () =>
-                    Navigator.of(context).popUntil((route) => route.isFirst),
+                onPressed: () => context.go(AppRoutes.menu),
               ),
             ],
           ),
