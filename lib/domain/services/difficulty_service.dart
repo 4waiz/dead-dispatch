@@ -99,7 +99,7 @@ class DifficultyService {
     // Apply player upgrades that affect difficulty (e.g. belt speed tolerance).
     final tolerance =
         profile.upgradeLevel(UpgradeKind.beltSpeedTolerance).toDouble();
-    final beltMultiplier = 1.0 + (level * 0.05) - (tolerance * 0.04);
+    final beltMultiplier = 1.0 + (level * 0.12) - (tolerance * 0.04);
 
     return ShiftConfig(
       id: id,

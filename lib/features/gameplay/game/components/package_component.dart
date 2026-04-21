@@ -33,14 +33,14 @@ class PackageComponent extends PositionComponent
 
   static double _baseSpeedFor(PackageType type) {
     switch (type) {
-      case PackageType.standard:   return 90;
-      case PackageType.priority:   return 95;
-      case PackageType.fragile:    return 70;
-      case PackageType.frozen:     return 60;
-      case PackageType.ghost:      return 110;
-      case PackageType.mislabeled: return 95;
-      case PackageType.duplicate:  return 95;
-      case PackageType.decaying:   return 100;
+      case PackageType.standard:   return 120;
+      case PackageType.priority:   return 130;
+      case PackageType.fragile:    return 90;
+      case PackageType.frozen:     return 75;
+      case PackageType.ghost:      return 150;
+      case PackageType.mislabeled: return 125;
+      case PackageType.duplicate:  return 125;
+      case PackageType.decaying:   return 135;
     }
   }
 
