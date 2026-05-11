@@ -7,13 +7,15 @@ import '../../../app/app_router.dart';
 import '../../../di/providers.dart';
 import '../../../domain/models/currency.dart';
 import '../../../domain/models/daily_challenge.dart';
+import '../../../domain/models/department.dart';
 import '../../../domain/models/shift_result.dart';
 import '../../../l10n/strings_en.dart';
-import '../../../services/ads_service.dart';
-import '../../../services/analytics_service.dart';
+import '../../../presentation/gameplay_copy.dart';
 import '../../../presentation/theme/colors.dart';
 import '../../../presentation/widgets/primary_button.dart';
 import '../../../presentation/widgets/reward_dialog.dart';
+import '../../../services/ads_service.dart';
+import '../../../services/analytics_service.dart';
 
 class ShiftResultScreen extends ConsumerStatefulWidget {
   const ShiftResultScreen({required this.result, super.key});
@@ -43,7 +45,8 @@ class _ShiftResultScreenState extends ConsumerState<ShiftResultScreen> {
     final dailyRepo = ref0.read(dailyRepositoryProvider);
 
     progression.recordShift(profile, widget.result);
-    final payout = economy.payoutForShift(profile: profile, result: widget.result);
+    final payout =
+        economy.payoutForShift(profile: profile, result: widget.result);
     economy.award(profile, payout);
 
     if (widget.result.shiftId.startsWith('daily-')) {
@@ -122,6 +125,11 @@ class _ShiftResultScreenState extends ConsumerState<ShiftResultScreen> {
   @override
   Widget build(BuildContext context) {
     final r = widget.result;
+    final profile = ref.watch(playerProfileProvider);
+    final progression = ref.read(progressionServiceProvider);
+    final nextRooms = progression.nextRestorableDepartments(profile);
+    final nextRoom = nextRooms.isEmpty ? null : nextRooms.first;
+    final coins = profile.wallet.get(Currency.coins);
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text(Strings.shiftEnd)),
@@ -141,6 +149,11 @@ class _ShiftResultScreenState extends ConsumerState<ShiftResultScreen> {
                 label: Strings.resultPayout,
                 value: '$_payout coins',
                 highlight: true,
+              ),
+              _RestorationProgressCard(
+                coins: coins,
+                nextRoom: nextRoom,
+                onTap: () => context.go(AppRoutes.departments),
               ),
               const Spacer(),
               if (!_doubled)
@@ -173,6 +186,96 @@ class _ShiftResultScreenState extends ConsumerState<ShiftResultScreen> {
   }
 }
 
+class _RestorationProgressCard extends StatelessWidget {
+  const _RestorationProgressCard({
+    required this.coins,
+    required this.nextRoom,
+    required this.onTap,
+  });
+
+  final int coins;
+  final DepartmentDescriptor? nextRoom;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final room = nextRoom;
+    final progress = room == null
+        ? 1.0
+        : (coins / room.restoreCost).clamp(0.0, 1.0).toDouble();
+    final title = room == null ? 'Office restored' : 'Next room: ${room.name}';
+    final subtitle = room == null
+        ? 'Every room in Dead Dispatch is restored.'
+        : '${unlockSummary(room.unlocks)} - $coins / ${room.restoreCost} coins';
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border:
+              Border.all(color: AppColors.accentGold.withValues(alpha: 0.45)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.apartment,
+                  color: AppColors.accentGold,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right,
+                  color: AppColors.accentGold,
+                  size: 18,
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 5,
+                color: AppColors.accentGold,
+                backgroundColor: AppColors.surfaceHi,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _StatCard extends StatelessWidget {
   const _StatCard({
     required this.label,
@@ -199,14 +302,18 @@ class _StatCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: const TextStyle(color: AppColors.textMuted, fontSize: 16)),
-          Text(value,
-              style: TextStyle(
-                color: highlight ? AppColors.accentGold : AppColors.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              )),
+          Text(
+            label,
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 16),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: highlight ? AppColors.accentGold : AppColors.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ],
       ),
     );

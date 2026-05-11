@@ -5,9 +5,10 @@ import '../../../di/providers.dart';
 import '../../../domain/models/currency.dart';
 import '../../../domain/models/department.dart';
 import '../../../l10n/strings_en.dart';
-import '../../../services/analytics_service.dart';
+import '../../../presentation/gameplay_copy.dart';
 import '../../../presentation/theme/colors.dart';
 import '../../../presentation/widgets/currency_chip.dart';
+import '../../../services/analytics_service.dart';
 
 class DepartmentScreen extends ConsumerWidget {
   const DepartmentScreen({super.key});
@@ -34,13 +35,16 @@ class DepartmentScreen extends ConsumerWidget {
       ),
       body: ListView.separated(
         padding: const EdgeInsets.all(16),
-        itemCount: all.length,
+        itemCount: all.length + 1,
         separatorBuilder: (_, __) => const SizedBox(height: 10),
         itemBuilder: (ctx, i) {
-          final dept = all[i];
+          if (i == 0) {
+            return const _RestorationHeader();
+          }
+          final dept = all[i - 1];
           final restored = profile.isDepartmentRestored(dept.id);
-          final canAfford =
-              !restored && profile.wallet.canSpend(Currency.coins, dept.restoreCost);
+          final canAfford = !restored &&
+              profile.wallet.canSpend(Currency.coins, dept.restoreCost);
           return _DepartmentCard(
             dept: dept,
             restored: restored,
@@ -67,6 +71,38 @@ class DepartmentScreen extends ConsumerWidget {
                   },
           );
         },
+      ),
+    );
+  }
+}
+
+class _RestorationHeader extends StatelessWidget {
+  const _RestorationHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.35)),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.apartment, color: AppColors.accentGold, size: 22),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Spend shift coins to restore rooms. Each restored room unlocks new parcels, upgrades, or rules.',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 13,
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -121,16 +157,25 @@ class _DepartmentCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          Text(dept.flavor,
-              style: const TextStyle(color: AppColors.textMuted)),
+          Text(dept.flavor, style: const TextStyle(color: AppColors.textMuted)),
+          const SizedBox(height: 8),
+          Text(
+            unlockSummary(dept.unlocks),
+            style: const TextStyle(
+              color: AppColors.accentGold,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
           const SizedBox(height: 10),
           Row(
             children: [
-              const Icon(Icons.toll,
-                  color: AppColors.accentGold, size: 18),
+              const Icon(Icons.toll, color: AppColors.accentGold, size: 18),
               const SizedBox(width: 6),
-              Text('${dept.restoreCost}',
-                  style: const TextStyle(color: AppColors.accentGold)),
+              Text(
+                '${dept.restoreCost}',
+                style: const TextStyle(color: AppColors.accentGold),
+              ),
               const Spacer(),
               if (!restored)
                 FilledButton(
@@ -140,7 +185,7 @@ class _DepartmentCard extends StatelessWidget {
                         canAfford ? AppColors.accentGold : AppColors.outline,
                     foregroundColor: AppColors.background,
                   ),
-                  child: const Text('Restore'),
+                  child: const Text('Restore room'),
                 ),
             ],
           ),

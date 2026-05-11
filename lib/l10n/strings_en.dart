@@ -9,7 +9,7 @@ class Strings {
   static const String menuPlay = 'Play Shift';
   static const String menuDaily = 'Daily Challenge';
   static const String menuUpgrades = 'Upgrades';
-  static const String menuDepartments = 'Departments';
+  static const String menuDepartments = 'Restore';
   static const String menuSettings = 'Settings';
   static const String menuQuit = 'Quit';
   static const String menuTutorial = 'How to Play';
@@ -27,7 +27,7 @@ class Strings {
   static const String resultContinue = 'Continue (1 free)';
 
   static const String upgradesTitle = 'Mailroom upgrades';
-  static const String departmentsTitle = 'Restoration';
+  static const String departmentsTitle = 'Restore Office';
   static const String dailyTitle = "Today's seal";
 
   static const String settingsTitle = 'Settings';
@@ -42,11 +42,11 @@ class Strings {
       'This wipes all progress. Continue?';
 
   static const String tutorialIntro =
-      'Mail moves on the belts. Tap a switch to choose its lane.';
+      'You run a haunted mailroom. Sort cursed parcels to earn coins and restore the Dead Dispatch office.';
   static const String tutorialPriority =
-      'Priority parcels glow gold. Stamp them before they exit.';
+      'Each parcel has a destination. Gold priority parcels must be stamped, then sent to the Secure Vault.';
   static const String tutorialFragile =
-      'Fragile mail breaks at high speeds — slow it through the side chute.';
+      'Other parcels unlock as you restore rooms. Fragile mail goes through the Side Chute or it breaks.';
   static const String tutorialJam =
-      'When the belt jams, tap the red light to clear it before time runs out.';
+      'Hit the shift score target before time runs out. More coins means more restored rooms and stranger mail.';
 }

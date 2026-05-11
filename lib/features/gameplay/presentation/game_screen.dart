@@ -10,6 +10,7 @@ import '../../../di/providers.dart';
 import '../../../domain/balance/balance_data.dart';
 import '../../../domain/models/package.dart';
 import '../../../domain/models/shift_config.dart';
+import '../../../presentation/gameplay_copy.dart';
 import '../../../presentation/theme/colors.dart';
 import '../../../presentation/widgets/combo_meter.dart';
 import '../../../presentation/widgets/pause_menu.dart';
@@ -43,8 +44,6 @@ class _GameScreenState extends ConsumerState<GameScreen>
   Duration _remaining = Duration.zero;
   int _stamps = 0;
   GamePackage? _pendingPackage;
-
-  static const double _routingTotal = 6.0;
 
   @override
   void initState() {
@@ -242,7 +241,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
                   Text(
                     '${secsLeft ~/ 60}:${(secsLeft % 60).toString().padLeft(2, '0')}',
                     style: TextStyle(
-                      color: timeUrgent ? AppColors.accentDanger : AppColors.textPrimary,
+                      color: timeUrgent
+                          ? AppColors.accentDanger
+                          : AppColors.textPrimary,
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
                       height: 1,
@@ -256,7 +257,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
                       child: LinearProgressIndicator(
                         value: 1.0 - timeProgress,
                         minHeight: 5,
-                        color: timeUrgent ? AppColors.accentDanger : AppColors.accentOk,
+                        color: timeUrgent
+                            ? AppColors.accentDanger
+                            : AppColors.accentOk,
                         backgroundColor: AppColors.surfaceHi,
                       ),
                     ),
@@ -266,7 +269,11 @@ class _GameScreenState extends ConsumerState<GameScreen>
               const SizedBox(width: 4),
               ComboMeter(combo: _combo, multiplier: _multiplier),
               IconButton(
-                icon: const Icon(Icons.pause_rounded, color: AppColors.textMuted, size: 22),
+                icon: const Icon(
+                  Icons.pause_rounded,
+                  color: AppColors.textMuted,
+                  size: 22,
+                ),
                 onPressed: _togglePause,
                 padding: const EdgeInsets.all(8),
               ),
@@ -283,6 +290,11 @@ class _GameScreenState extends ConsumerState<GameScreen>
     final pkg = _pendingPackage!;
     final pkgColor = AppColors.forPackage(pkg.type);
     final lanes = _activeLanes;
+    final instruction = routingInstructionFor(
+      type: pkg.type,
+      balance: _balance,
+      stamped: pkg.stamped,
+    );
 
     return AnimatedBuilder(
       animation: _routingTimer,
@@ -315,31 +327,42 @@ class _GameScreenState extends ConsumerState<GameScreen>
               ),
               const SizedBox(height: 10),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Package preview chip
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: pkgColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: pkgColor.withValues(alpha: 0.6)),
+                      border:
+                          Border.all(color: pkgColor.withValues(alpha: 0.6)),
                     ),
                     child: Text(
-                      pkg.type.name.toUpperCase(),
+                      packageDisplayName(pkg.type).toUpperCase(),
                       style: TextStyle(
                         color: pkgColor,
                         fontWeight: FontWeight.w800,
-                        fontSize: 12,
-                        letterSpacing: 0.8,
+                        fontSize: 11,
+                        letterSpacing: 0.6,
                       ),
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Text(
-                    'Route to →',
-                    style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                  Expanded(
+                    child: Text(
+                      instruction,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        height: 1.2,
+                      ),
+                    ),
                   ),
-                  const Spacer(),
                   if (_stamps > 0)
                     _StampButton(
                       stamps: _stamps,
@@ -394,7 +417,8 @@ class _LaneButton extends StatelessWidget {
             colors: [Color(0xFF2E334E), Color(0xFF232840)],
           ),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.35)),
+          border:
+              Border.all(color: AppColors.accentGold.withValues(alpha: 0.35)),
           boxShadow: const [
             BoxShadow(
               color: Color(0x33F5C04A),
@@ -404,12 +428,12 @@ class _LaneButton extends StatelessWidget {
           ],
         ),
         child: Text(
-          lane.toUpperCase(),
+          laneDisplayName(lane).toUpperCase(),
           style: const TextStyle(
             color: AppColors.accentGold,
             fontWeight: FontWeight.w800,
-            fontSize: 14,
-            letterSpacing: 1.2,
+            fontSize: 13,
+            letterSpacing: 0.8,
           ),
         ),
       ),

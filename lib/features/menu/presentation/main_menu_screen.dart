@@ -6,7 +6,9 @@ import '../../../app/app_router.dart';
 import '../../../core/debug_flags.dart';
 import '../../../di/providers.dart';
 import '../../../domain/models/currency.dart';
+import '../../../domain/models/department.dart';
 import '../../../l10n/strings_en.dart';
+import '../../../presentation/gameplay_copy.dart';
 import '../../../presentation/theme/colors.dart';
 
 class MainMenuScreen extends ConsumerWidget {
@@ -16,6 +18,10 @@ class MainMenuScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(playerProfileProvider);
     final coins = profile.wallet.get(Currency.coins);
+    final progression = ref.read(progressionServiceProvider);
+    final nextRooms = progression.nextRestorableDepartments(profile);
+    final nextRoom = nextRooms.isEmpty ? null : nextRooms.first;
+    final totalRooms = ref.watch(balanceDataProvider).departments.length;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -42,7 +48,8 @@ class MainMenuScreen extends ConsumerWidget {
                             color: AppColors.accentGold.withValues(alpha: 0.12),
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: AppColors.accentGold.withValues(alpha: 0.4),
+                              color:
+                                  AppColors.accentGold.withValues(alpha: 0.4),
                               width: 1.5,
                             ),
                           ),
@@ -107,6 +114,16 @@ class MainMenuScreen extends ConsumerWidget {
                         ),
                       ),
                     ],
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  _RestorationCard(
+                    coins: coins,
+                    nextRoom: nextRoom,
+                    restoredCount: profile.restoredDepartments.length,
+                    totalRooms: totalRooms,
+                    onTap: () => context.push(AppRoutes.departments),
                   ),
 
                   const Spacer(),
@@ -206,11 +223,16 @@ class _BgPainter extends CustomPainter {
       ..color = const Color(0x07F5C04A)
       ..strokeWidth = 1;
     for (double x = -size.height; x < size.width + size.height; x += 40) {
-      canvas.drawLine(Offset(x, 0), Offset(x + size.height, size.height), paint);
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x + size.height, size.height),
+        paint,
+      );
     }
 
     // Bottom glow
-    final glowRect = Rect.fromLTWH(0, size.height * 0.6, size.width, size.height * 0.4);
+    final glowRect =
+        Rect.fromLTWH(0, size.height * 0.6, size.width, size.height * 0.4);
     canvas.drawRect(
       glowRect,
       Paint()
@@ -277,6 +299,121 @@ class _StatCard extends StatelessWidget {
   }
 }
 
+class _RestorationCard extends StatelessWidget {
+  const _RestorationCard({
+    required this.coins,
+    required this.nextRoom,
+    required this.restoredCount,
+    required this.totalRooms,
+    required this.onTap,
+  });
+
+  final int coins;
+  final DepartmentDescriptor? nextRoom;
+  final int restoredCount;
+  final int totalRooms;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final room = nextRoom;
+    final progress = room == null
+        ? 1.0
+        : (coins / room.restoreCost).clamp(0.0, 1.0).toDouble();
+    final title = room == null ? 'Office restored' : 'Restore ${room.name}';
+    final subtitle = room == null
+        ? '$restoredCount / $totalRooms rooms restored'
+        : '${unlockSummary(room.unlocks)} - $coins / ${room.restoreCost} coins';
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border:
+              Border.all(color: AppColors.accentGold.withValues(alpha: 0.4)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.accentGold.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.apartment,
+                    color: AppColors.accentGold,
+                    size: 21,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const Text(
+                        'Sort shifts to earn coins and rebuild the office.',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  color: AppColors.accentGold.withValues(alpha: 0.65),
+                  size: 20,
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 5,
+                color: AppColors.accentGold,
+                backgroundColor: AppColors.surfaceHi,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _BigPlayButton extends StatelessWidget {
   const _BigPlayButton({required this.label, required this.onPressed});
   final String label;
@@ -304,7 +441,11 @@ class _BigPlayButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.play_arrow_rounded, color: Color(0xFF161824), size: 28),
+            const Icon(
+              Icons.play_arrow_rounded,
+              color: Color(0xFF161824),
+              size: 28,
+            ),
             const SizedBox(width: 8),
             Text(
               label.toUpperCase(),
@@ -381,7 +522,11 @@ class _MenuTile extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: accent.withValues(alpha: 0.6), size: 20),
+            Icon(
+              Icons.chevron_right,
+              color: accent.withValues(alpha: 0.6),
+              size: 20,
+            ),
           ],
         ),
       ),

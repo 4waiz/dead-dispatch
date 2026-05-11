@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
 import '../../../di/providers.dart';
+import '../../../domain/balance/balance_data.dart';
 import '../../../domain/models/hazard.dart';
 import '../../../domain/models/package_type.dart';
 import '../../../domain/models/shift_config.dart';
+import '../../../presentation/gameplay_copy.dart';
 import '../../../presentation/theme/colors.dart';
 
 class ShiftBriefScreen extends ConsumerWidget {
@@ -21,6 +23,7 @@ class ShiftBriefScreen extends ConsumerWidget {
         ? difficulty.buildDaily(profile, dateKey: dailyDateKey)
         : difficulty.buildRegular(profile);
     final level = difficulty.progressionLevelFor(profile);
+    final balance = ref.watch(balanceDataProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -40,7 +43,7 @@ class ShiftBriefScreen extends ConsumerWidget {
                         const SizedBox(height: 16),
                         _buildStatRow(cfg),
                         const SizedBox(height: 16),
-                        _buildParcelsCard(cfg),
+                        _buildParcelsCard(cfg, balance),
                         if (cfg.allowedHazards.isNotEmpty) ...[
                           const SizedBox(height: 12),
                           _buildHazardsCard(cfg),
@@ -70,8 +73,11 @@ class ShiftBriefScreen extends ConsumerWidget {
             left: 0,
             child: SafeArea(
               child: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new,
-                    color: AppColors.textMuted, size: 18,),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new,
+                  color: AppColors.textMuted,
+                  size: 18,
+                ),
                 onPressed: () => context.pop(),
               ),
             ),
@@ -93,10 +99,15 @@ class ShiftBriefScreen extends ConsumerWidget {
               color: AppColors.accentGold.withValues(alpha: 0.12),
               shape: BoxShape.circle,
               border: Border.all(
-                  color: AppColors.accentGold.withValues(alpha: 0.5), width: 1.5,),
+                color: AppColors.accentGold.withValues(alpha: 0.5),
+                width: 1.5,
+              ),
             ),
-            child: const Icon(Icons.receipt_long,
-                color: AppColors.accentGold, size: 30,),
+            child: const Icon(
+              Icons.receipt_long,
+              color: AppColors.accentGold,
+              size: 30,
+            ),
           ),
           const SizedBox(height: 12),
           Text(
@@ -106,6 +117,16 @@ class ShiftBriefScreen extends ConsumerWidget {
               fontSize: 22,
               fontWeight: FontWeight.w900,
               letterSpacing: 3,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Sort parcels, hit the target, earn coins, restore the office.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 13,
+              height: 1.25,
             ),
           ),
           const SizedBox(height: 4),
@@ -135,9 +156,8 @@ class ShiftBriefScreen extends ConsumerWidget {
     final secsLeft = cfg.duration.inSeconds;
     final mins = secsLeft ~/ 60;
     final secs = secsLeft % 60;
-    final timeStr = mins > 0
-        ? '$mins:${secs.toString().padLeft(2, '0')}'
-        : '${secsLeft}s';
+    final timeStr =
+        mins > 0 ? '$mins:${secs.toString().padLeft(2, '0')}' : '${secsLeft}s';
 
     final speedPct =
         ((cfg.beltSpeedMultiplier - 1.0) * 100).round().clamp(0, 200);
@@ -145,40 +165,46 @@ class ShiftBriefScreen extends ConsumerWidget {
     return Row(
       children: [
         Expanded(
-            child: _MiniStat(
-                icon: Icons.emoji_events,
-                label: 'TARGET',
-                value: '${cfg.targetScore}',
-                color: AppColors.accentGold,),),
+          child: _MiniStat(
+            icon: Icons.emoji_events,
+            label: 'TARGET',
+            value: '${cfg.targetScore}',
+            color: AppColors.accentGold,
+          ),
+        ),
         const SizedBox(width: 10),
         Expanded(
-            child: _MiniStat(
-                icon: Icons.timer,
-                label: 'DURATION',
-                value: timeStr,
-                color: AppColors.accentGhost,),),
+          child: _MiniStat(
+            icon: Icons.timer,
+            label: 'DURATION',
+            value: timeStr,
+            color: AppColors.accentGhost,
+          ),
+        ),
         const SizedBox(width: 10),
         Expanded(
-            child: _MiniStat(
-                icon: Icons.speed,
-                label: 'BELT SPEED',
-                value: '+$speedPct%',
-                color: speedPct >= 20
-                    ? AppColors.accentDanger
-                    : AppColors.accentOk,),),
+          child: _MiniStat(
+            icon: Icons.speed,
+            label: 'BELT SPEED',
+            value: '+$speedPct%',
+            color: speedPct >= 20 ? AppColors.accentDanger : AppColors.accentOk,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildParcelsCard(ShiftConfig cfg) {
+  Widget _buildParcelsCard(ShiftConfig cfg, BalanceData balance) {
     return _SectionCard(
-      title: 'INCOMING PARCELS',
+      title: 'WHAT TO SORT',
       accentColor: AppColors.accentGold,
       icon: Icons.inventory_2,
       child: Wrap(
         spacing: 8,
         runSpacing: 8,
-        children: cfg.allowedTypes.map((t) => _ParcelChip(type: t)).toList(),
+        children: cfg.allowedTypes
+            .map((t) => _ParcelChip(type: t, balance: balance))
+            .toList(),
       ),
     );
   }
@@ -189,9 +215,7 @@ class ShiftBriefScreen extends ConsumerWidget {
       accentColor: AppColors.accentDanger,
       icon: Icons.warning_amber,
       child: Column(
-        children: cfg.allowedHazards
-            .map((h) => _HazardRow(kind: h))
-            .toList(),
+        children: cfg.allowedHazards.map((h) => _HazardRow(kind: h)).toList(),
       ),
     );
   }
@@ -213,7 +237,8 @@ class ShiftBriefScreen extends ConsumerWidget {
                   color: AppColors.accentGhost.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                      color: AppColors.accentGhost.withValues(alpha: 0.5),),
+                    color: AppColors.accentGhost.withValues(alpha: 0.5),
+                  ),
                 ),
                 child: Text(
                   m.key.toUpperCase(),
@@ -247,7 +272,11 @@ class _BgPainter extends CustomPainter {
       ..color = const Color(0x05F5C04A)
       ..strokeWidth = 1;
     for (double x = -size.height; x < size.width + size.height; x += 32) {
-      canvas.drawLine(Offset(x, 0), Offset(x + size.height, size.height), paint);
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x + size.height, size.height),
+        paint,
+      );
     }
     final glowRect =
         Rect.fromLTWH(0, size.height * 0.7, size.width, size.height * 0.3);
@@ -370,19 +399,28 @@ class _SectionCard extends StatelessWidget {
 }
 
 class _ParcelChip extends StatelessWidget {
-  const _ParcelChip({required this.type});
+  const _ParcelChip({required this.type, required this.balance});
   final PackageType type;
+  final BalanceData balance;
 
-  String get _emoji {
+  IconData get _icon {
     switch (type) {
-      case PackageType.standard:   return '📦';
-      case PackageType.priority:   return '⚡';
-      case PackageType.fragile:    return '🔮';
-      case PackageType.frozen:     return '❄️';
-      case PackageType.ghost:      return '👻';
-      case PackageType.mislabeled: return '❓';
-      case PackageType.duplicate:  return '✂️';
-      case PackageType.decaying:   return '☠️';
+      case PackageType.standard:
+        return Icons.inventory_2;
+      case PackageType.priority:
+        return Icons.bolt;
+      case PackageType.fragile:
+        return Icons.warning_amber;
+      case PackageType.frozen:
+        return Icons.ac_unit;
+      case PackageType.ghost:
+        return Icons.auto_awesome;
+      case PackageType.mislabeled:
+        return Icons.help_outline;
+      case PackageType.duplicate:
+        return Icons.content_cut;
+      case PackageType.decaying:
+        return Icons.local_fire_department;
     }
   }
 
@@ -399,16 +437,28 @@ class _ParcelChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(_emoji, style: const TextStyle(fontSize: 16)),
+          Icon(_icon, color: col, size: 16),
           const SizedBox(width: 6),
-          Text(
-            type.key.toUpperCase(),
-            style: TextStyle(
-              color: col,
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
-              letterSpacing: 0.5,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                packageDisplayName(type).toUpperCase(),
+                style: TextStyle(
+                  color: col,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              Text(
+                briefRuleFor(type, balance),
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 10,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -422,23 +472,35 @@ class _HazardRow extends StatelessWidget {
 
   IconData get _icon {
     switch (kind) {
-      case HazardKind.beltJam:       return Icons.block;
-      case HazardKind.misrouteChain: return Icons.shuffle;
-      case HazardKind.surgeRush:     return Icons.bolt;
-      case HazardKind.powerFlicker:  return Icons.flash_off;
-      case HazardKind.vipWave:       return Icons.star;
-      case HazardKind.blackout:      return Icons.visibility_off;
+      case HazardKind.beltJam:
+        return Icons.block;
+      case HazardKind.misrouteChain:
+        return Icons.shuffle;
+      case HazardKind.surgeRush:
+        return Icons.bolt;
+      case HazardKind.powerFlicker:
+        return Icons.flash_off;
+      case HazardKind.vipWave:
+        return Icons.star;
+      case HazardKind.blackout:
+        return Icons.visibility_off;
     }
   }
 
   String get _desc {
     switch (kind) {
-      case HazardKind.beltJam:       return 'Belt stops — parcels pile up';
-      case HazardKind.misrouteChain: return 'Lane labels randomly swap';
-      case HazardKind.surgeRush:     return 'Double spawn rate for a burst';
-      case HazardKind.powerFlicker:  return 'Screen flickers, lanes go dark';
-      case HazardKind.vipWave:       return 'Only priority & ghost parcels';
-      case HazardKind.blackout:      return 'Full blackout — route by memory';
+      case HazardKind.beltJam:
+        return 'Belt stops — parcels pile up';
+      case HazardKind.misrouteChain:
+        return 'Lane labels randomly swap';
+      case HazardKind.surgeRush:
+        return 'Double spawn rate for a burst';
+      case HazardKind.powerFlicker:
+        return 'Screen flickers, lanes go dark';
+      case HazardKind.vipWave:
+        return 'Only priority & ghost parcels';
+      case HazardKind.blackout:
+        return 'Full blackout — route by memory';
     }
   }
 
@@ -513,8 +575,11 @@ class _BeginButton extends StatelessWidget {
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.play_arrow_rounded,
-                color: Color(0xFF161824), size: 28,),
+            Icon(
+              Icons.play_arrow_rounded,
+              color: Color(0xFF161824),
+              size: 28,
+            ),
             SizedBox(width: 8),
             Text(
               'BEGIN SHIFT',
