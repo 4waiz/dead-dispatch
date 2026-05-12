@@ -1,38 +1,32 @@
 [
   {
-    "kind": "beltJam",
-    "durationMs": 4000,
+    "kind": "frozenFloor",
+    "durationMs": 0,
     "severity": 0.4,
-    "tutorialHint": "Tap the red light to clear the jam."
+    "tutorialHint": "Frozen Floor — a few cells start frosted. Clear lines next to them to melt them."
   },
   {
-    "kind": "powerFlicker",
-    "durationMs": 2500,
+    "kind": "priorityRush",
+    "durationMs": 0,
+    "severity": 0.6,
+    "tutorialHint": "Priority Rush — orange Priority pieces score extra coins today."
+  },
+  {
+    "kind": "voidSpots",
+    "durationMs": 0,
     "severity": 0.5,
-    "tutorialHint": "Lights flicker — gates lock briefly."
+    "tutorialHint": "Void Spots — two cells start blocked. Clear lines through them to free them."
   },
   {
-    "kind": "misrouteChain",
-    "durationMs": 3500,
-    "severity": 0.6,
-    "tutorialHint": "Recent misroutes daisy-chain. Re-aim fast."
-  },
-  {
-    "kind": "surgeRush",
-    "durationMs": 5000,
+    "kind": "goldenMail",
+    "durationMs": 0,
     "severity": 0.7,
-    "tutorialHint": "Spawn rate spikes. Prioritise gold parcels."
+    "tutorialHint": "Golden Mail — every gold Vault piece pays out double coins."
   },
   {
-    "kind": "blackout",
-    "durationMs": 6000,
-    "severity": 0.8,
-    "tutorialHint": "Lights out — only silhouettes remain."
-  },
-  {
-    "kind": "vipWave",
-    "durationMs": 5000,
-    "severity": 0.6,
-    "tutorialHint": "VIP wave: only priority + ghost parcels appear."
+    "kind": "fragileBatch",
+    "durationMs": 0,
+    "severity": 0.5,
+    "tutorialHint": "Fragile Batch — more Fragile pieces appear in today's bag."
   }
 ]

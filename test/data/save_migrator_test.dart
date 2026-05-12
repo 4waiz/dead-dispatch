@@ -30,5 +30,32 @@ void main() {
           .migrate({'schemaVersion': AppConstants.saveSchemaVersion + 1});
       expect(out.isErr, isTrue);
     });
+
+    test('v1 → v2 renames conveyor-era upgrade kinds', () {
+      // A v1 save whose upgrades list still uses the conveyor-era enum
+      // keys must come back with the block-puzzle-era keys.
+      final input = <String, Object?>{
+        'schemaVersion': 1,
+        'upgrades': <Map<String, Object?>>[
+          {'kind': 'beltSpeedTolerance', 'level': 2},
+          {'kind': 'stampSupply', 'level': 1},
+          {'kind': 'hazardWarning', 'level': 1},
+          {'kind': 'payoutMultiplier', 'level': 3},
+        ],
+      };
+      final out = migrator.migrate(input);
+      final map = out.valueOrNull!;
+      expect(map['schemaVersion'], 2);
+      final upgrades = (map['upgrades']! as List)
+          .cast<Map<String, Object?>>()
+          .map((e) => e['kind'])
+          .toList();
+      expect(upgrades, [
+        'bagSoftness',
+        'stampBlastCharges',
+        'modifierTelegraph',
+        'payoutMultiplier',
+      ]);
+    });
   });
 }

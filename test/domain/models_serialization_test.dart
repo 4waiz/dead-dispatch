@@ -46,6 +46,17 @@ void main() {
       expect(decoded.level, 2);
     });
 
+    test('OwnedUpgrade migrates legacy conveyor-era kind keys', () {
+      // Saves written before the block-puzzle pivot used these keys.
+      // The v1 → v2 migrator handles them; the model also tolerates them
+      // directly via UpgradeKind.fromKey.
+      final decoded = OwnedUpgrade.fromJson(
+        const <String, Object?>{'kind': 'beltSpeedTolerance', 'level': 3},
+      );
+      expect(decoded.kind, UpgradeKind.bagSoftness);
+      expect(decoded.level, 3);
+    });
+
     test('RestoredDepartment round-trips', () {
       final now = DateTime(2025, 6, 15);
       final d = RestoredDepartment(id: 'vault', restoredAt: now);
@@ -70,13 +81,25 @@ void main() {
     });
 
     test('PlayerProfile round-trips a full profile', () {
-      final profile = PlayerProfile.fresh(1);
+      final profile = PlayerProfile(
+        schemaVersion: 1,
+        createdAt: DateTime(2025),
+        lastPlayedAt: DateTime(2025),
+        tutorialCompleted: false,
+        totalShiftsPlayed: 0,
+        bestShiftScore: 0,
+        wallet: Wallet(),
+        upgrades: [],
+        restoredDepartments: [],
+        dailyAttempts: [],
+        settings: const SettingsSnapshot(),
+      );
       profile.tutorialCompleted = true;
       profile.totalShiftsPlayed = 7;
       profile.bestShiftScore = 1500;
       profile.wallet.add(Currency.coins, 300);
       profile.upgrades.add(
-        const OwnedUpgrade(kind: UpgradeKind.stampSupply, level: 1),
+        const OwnedUpgrade(kind: UpgradeKind.stampBlastCharges, level: 1),
       );
       profile.restoredDepartments.add(
         RestoredDepartment(id: 'lobby', restoredAt: DateTime(2025, 6, 1)),
@@ -88,7 +111,7 @@ void main() {
       expect(decoded.totalShiftsPlayed, 7);
       expect(decoded.bestShiftScore, 1500);
       expect(decoded.wallet.get(Currency.coins), 300);
-      expect(decoded.upgrades.first.kind, UpgradeKind.stampSupply);
+      expect(decoded.upgrades.first.kind, UpgradeKind.stampBlastCharges);
       expect(decoded.restoredDepartments.first.id, 'lobby');
     });
   });

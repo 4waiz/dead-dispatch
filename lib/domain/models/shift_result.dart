@@ -1,7 +1,9 @@
 import 'package.dart';
 
 /// Final tally for one shift. Consumed by the result screen, economy
-/// service (to award currency), and progression service (to bump XP).
+/// service (to award currency), and progression service (to bump best
+/// score). `ShiftResult.coins` is the base payout; the economy service
+/// applies upgrade multipliers and daily bonuses on top.
 class ShiftResult {
   const ShiftResult({
     required this.shiftId,
@@ -20,16 +22,20 @@ class ShiftResult {
   final int combo;
   final int maxCombo;
   final int coins;
-  final List<SortRecord> records;
+  final List<PlacementRecord> records;
+
+  /// True when the player hit [ShiftConfig.targetScore] before game over.
   final bool completed;
   final String? failureReason;
   final Duration duration;
 
-  int get perfects =>
-      records.where((r) => r.outcome == SortOutcome.perfect).length;
-  int get acceptableCount =>
-      records.where((r) => r.outcome == SortOutcome.acceptable).length;
-  int get misses => records.where((r) => r.outcome == SortOutcome.miss).length;
-  int get destroyed =>
-      records.where((r) => r.outcome == SortOutcome.destroyed).length;
+  /// Total rows + columns cleared across the whole shift.
+  int get linesCleared =>
+      records.fold<int>(0, (acc, r) => acc + r.linesCleared);
+
+  /// Largest number of lines cleared by a single placement.
+  int get biggestClear =>
+      records.fold<int>(0, (acc, r) => r.linesCleared > acc ? r.linesCleared : acc);
+
+  int get piecesPlaced => records.length;
 }

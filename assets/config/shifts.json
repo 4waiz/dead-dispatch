@@ -1,11 +1,8 @@
 {
   "tutorialShift": {
-    "durationMs": 60000,
-    "spawnIntervalMs": 2200,
+    "gridSize": 6,
+    "pieceQueueSize": 3,
     "targetScore": 200,
-    "allowedTypes": ["standard", "priority"],
-    "allowedHazards": [],
-    "maxConcurrentPackages": 3,
-    "beltSpeedMultiplier": 0.85
+    "allowedTypes": ["standard", "priority"]
   }
 }

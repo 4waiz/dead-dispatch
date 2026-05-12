@@ -19,7 +19,6 @@ import '../domain/models/player_profile.dart';
 import '../domain/services/difficulty_service.dart';
 import '../domain/services/economy_service.dart';
 import '../domain/services/progression_service.dart';
-import '../domain/services/routing_service.dart';
 import '../services/ads_service.dart';
 import '../services/analytics_service.dart';
 import '../services/audio_service.dart';
@@ -103,10 +102,6 @@ final economyServiceProvider = Provider<EconomyService>(
 
 final progressionServiceProvider = Provider<ProgressionService>(
   (ref) => ProgressionService(ref.watch(balanceDataProvider)),
-);
-
-final routingServiceProvider = Provider<RoutingService>(
-  (ref) => RoutingService(ref.watch(balanceDataProvider)),
 );
 
 // -----------------------------------------------------------------------------

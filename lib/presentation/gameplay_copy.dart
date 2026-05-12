@@ -1,129 +1,62 @@
-import '../domain/balance/balance_data.dart';
+import '../domain/models/block_type.dart';
 import '../domain/models/department.dart';
-import '../domain/models/package_type.dart';
+import '../domain/models/hazard.dart';
 
-String packageDisplayName(PackageType type) {
-  switch (type) {
-    case PackageType.standard:
-      return 'Standard Parcel';
-    case PackageType.priority:
-      return 'Priority Parcel';
-    case PackageType.fragile:
-      return 'Fragile Parcel';
-    case PackageType.frozen:
-      return 'Frozen Parcel';
-    case PackageType.ghost:
-      return 'Ghost Parcel';
-    case PackageType.mislabeled:
-      return 'Mislabeled Parcel';
-    case PackageType.duplicate:
-      return 'Duplicate Parcel';
-    case PackageType.decaying:
-      return 'Decaying Parcel';
+/// Display name for a block type. Used by the result screen, brief, and
+/// any tooltip / unlock summary copy.
+String blockDisplayName(BlockType type) => type.displayName;
+
+/// Subtitle for a daily modifier. Mirrors `HazardDescriptor.tutorialHint`
+/// but allows local overrides without touching balance JSON.
+String dailyModifierHint(HazardKind kind) {
+  switch (kind) {
+    case HazardKind.frozenFloor:
+      return 'Frozen Floor — a few cells start frosted. Clear lines next to them to melt them.';
+    case HazardKind.priorityRush:
+      return 'Priority Rush — orange Priority pieces score extra coins today.';
+    case HazardKind.voidSpots:
+      return 'Void Spots — two cells start blocked. Clear lines through them to free them.';
+    case HazardKind.goldenMail:
+      return 'Golden Mail — every gold Vault piece pays out double coins.';
+    case HazardKind.fragileBatch:
+      return 'Fragile Batch — more Fragile pieces appear in today\'s bag.';
   }
 }
 
-String laneDisplayName(String lane) {
-  switch (lane) {
-    case 'north':
-      return 'Mail Bay';
-    case 'vault':
-      return 'Secure Vault';
-    case 'south':
-      return 'Side Chute';
-    case 'cold':
-      return 'Freezer';
-    case 'void':
-      return 'Void Gate';
-    case 'review':
-      return 'Review Desk';
-    case 'shred':
-      return 'Shredder';
-    case 'incinerator':
-      return 'Incinerator';
-    default:
-      return lane
-          .split('_')
-          .map(
-            (word) => word.isEmpty
-                ? word
-                : '${word[0].toUpperCase()}${word.substring(1)}',
-          )
-          .join(' ');
+/// Compact 1-line label for a daily modifier (chip / menu badge).
+String dailyModifierLabel(HazardKind kind) {
+  switch (kind) {
+    case HazardKind.frozenFloor:
+      return 'Frozen Floor';
+    case HazardKind.priorityRush:
+      return 'Priority Rush';
+    case HazardKind.voidSpots:
+      return 'Void Spots';
+    case HazardKind.goldenMail:
+      return 'Golden Mail';
+    case HazardKind.fragileBatch:
+      return 'Fragile Batch';
   }
 }
 
-String destinationForType(PackageType type, BalanceData balance) {
-  return laneDisplayName(balance.packageOf(type).lane);
-}
-
-String routingInstructionFor({
-  required PackageType type,
-  required BalanceData balance,
-  required bool stamped,
-}) {
-  final destination = destinationForType(type, balance);
-  switch (type) {
-    case PackageType.priority:
-      return stamped
-          ? 'Stamped. Send it to $destination.'
-          : 'Stamp it, then send it to $destination.';
-    case PackageType.fragile:
-      return 'Send it to $destination. Wrong lanes break it.';
-    case PackageType.frozen:
-      return 'Send it to $destination before it decays.';
-    case PackageType.mislabeled:
-      return 'Send it to $destination for inspection.';
-    case PackageType.duplicate:
-      return 'Send duplicate mail to $destination.';
-    case PackageType.decaying:
-      return 'Burn it in the $destination before it rots.';
-    case PackageType.ghost:
-      return stamped
-          ? 'Stamped. Send it through the $destination.'
-          : 'Stamp it, then send it through the $destination.';
-    case PackageType.standard:
-      return 'Send it to $destination.';
-  }
-}
-
-String briefRuleFor(PackageType type, BalanceData balance) {
-  final destination = destinationForType(type, balance);
-  switch (type) {
-    case PackageType.priority:
-      return 'Stamp, then $destination';
-    case PackageType.fragile:
-      return 'Route to $destination';
-    case PackageType.frozen:
-      return 'Route before decay';
-    case PackageType.mislabeled:
-      return 'Route to $destination';
-    case PackageType.duplicate:
-      return 'Destroy in $destination';
-    case PackageType.decaying:
-      return 'Burn in $destination';
-    case PackageType.ghost:
-      return 'Stamp, then $destination';
-    case PackageType.standard:
-      return 'Route to $destination';
-  }
-}
-
+/// One-line summary describing what restoring a department unlocks.
+/// Field semantics for the block-puzzle:
+///   • `packageType` → unlocks a new block type
+///   • `modifier`   → unlocks a power-up (e.g. "stampBlast", "ghostSwap")
+///   • `cosmetic`   → unlocks a board / piece skin
+///   • `upgradeKind` → unlocks an upgrade kind for purchase
 String unlockSummary(DepartmentUnlock unlocks) {
   if (unlocks.packageType != null) {
-    return 'Unlocks ${_titleCase(unlocks.packageType!)} parcels';
-  }
-  if (unlocks.upgradeKind != null) {
-    return 'Unlocks ${_titleCase(unlocks.upgradeKind!)} upgrades';
+    return 'Unlocks ${_titleCase(unlocks.packageType!)} blocks';
   }
   if (unlocks.modifier != null) {
-    return 'Unlocks ${_titleCase(unlocks.modifier!)} modifier';
-  }
-  if (unlocks.hazard != null) {
-    return 'Unlocks ${_titleCase(unlocks.hazard!)} hazard';
+    return 'Unlocks ${_titleCase(unlocks.modifier!)} power-up';
   }
   if (unlocks.cosmetic != null) {
     return 'Restores ${_titleCase(unlocks.cosmetic!)}';
+  }
+  if (unlocks.upgradeKind != null) {
+    return 'Unlocks ${_titleCase(unlocks.upgradeKind!)} upgrades';
   }
   return 'Restores part of the office';
 }

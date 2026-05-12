@@ -40,9 +40,9 @@ class SaveMigrator {
   }
 
   /// Registered migrations: key = "from version", value = transformer.
-  /// v0 → v1 fills out the initial shape for any pre-release dev save.
   static final Map<int, Map<String, Object?> Function(Map<String, Object?>)>
       _migrations = {
+    // v0 → v1 fills out the initial shape for any pre-release dev save.
     0: (raw) {
       final now = DateTime.now().toIso8601String();
       return {
@@ -59,6 +59,30 @@ class SaveMigrator {
         'dailyAttempts': raw['dailyAttempts'] ?? const <Object?>[],
         'settings': raw['settings'] ?? const <String, Object?>{},
       };
+    },
+    // v1 → v2 (block-puzzle pivot): rename conveyor-era upgrade kinds in
+    // the persisted upgrades list. PlayerProfile shape is otherwise
+    // identical, so no structural surgery is required.
+    1: (raw) {
+      const renames = <String, String>{
+        'beltSpeedTolerance': 'bagSoftness',
+        'stampSupply': 'stampBlastCharges',
+        'hazardWarning': 'modifierTelegraph',
+      };
+      final upgrades = raw['upgrades'];
+      if (upgrades is List) {
+        final migrated = upgrades.map((entry) {
+          if (entry is Map<String, Object?>) {
+            final kind = entry['kind'];
+            if (kind is String && renames.containsKey(kind)) {
+              return <String, Object?>{...entry, 'kind': renames[kind]};
+            }
+          }
+          return entry;
+        }).toList();
+        return <String, Object?>{...raw, 'upgrades': migrated};
+      }
+      return raw;
     },
   };
 }

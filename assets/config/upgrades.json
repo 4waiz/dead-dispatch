@@ -1,9 +1,9 @@
 [
   {
-    "kind": "beltSpeedTolerance",
+    "kind": "bagSoftness",
     "maxLevel": 5,
-    "title": "Greased Bearings",
-    "description": "Belts feel slower at higher difficulty.",
+    "title": "Steady Hand",
+    "description": "Early-shift pieces are gentler shapes.",
     "costs": [120, 240, 480, 900, 1600],
     "effects": [1, 2, 3, 4, 5],
     "currency": "coins"
@@ -12,25 +12,25 @@
     "kind": "comboGrace",
     "maxLevel": 3,
     "title": "Forgiving Foreman",
-    "description": "First miss per shift doesn't drop your combo.",
+    "description": "First non-clear placement per shift doesn't drop your combo.",
     "costs": [180, 360, 720],
     "effects": [1, 2, 3],
     "currency": "coins"
   },
   {
-    "kind": "stampSupply",
+    "kind": "stampBlastCharges",
     "maxLevel": 4,
     "title": "Ink Reserves",
-    "description": "Carry more priority stamps per shift.",
+    "description": "Carry more Stamp Blast charges per shift.",
     "costs": [100, 220, 440, 880],
-    "effects": [3, 5, 7, 10],
+    "effects": [1, 2, 3, 4],
     "currency": "coins"
   },
   {
     "kind": "fragileShield",
     "maxLevel": 3,
     "title": "Padded Liners",
-    "description": "Fragile parcels survive one extra bump.",
+    "description": "Fragile pieces don't crack on their first invalid drop.",
     "costs": [200, 400, 800],
     "effects": [1, 2, 3],
     "currency": "coins"
@@ -45,10 +45,10 @@
     "currency": "coins"
   },
   {
-    "kind": "hazardWarning",
+    "kind": "modifierTelegraph",
     "maxLevel": 2,
     "title": "Telegraph",
-    "description": "Hazards announce themselves earlier.",
+    "description": "Daily modifiers preview their effect on the brief.",
     "costs": [300, 600],
     "effects": [0.5, 1.0],
     "currency": "coins"
@@ -57,7 +57,7 @@
     "kind": "autoSorter",
     "maxLevel": 3,
     "title": "Phantom Intern",
-    "description": "Standard mail occasionally self-sorts.",
+    "description": "Standard pieces occasionally self-clear.",
     "costs": [400, 800, 1600],
     "effects": [0.10, 0.20, 0.30],
     "currency": "coins"
@@ -66,7 +66,7 @@
     "kind": "ghostBeacon",
     "maxLevel": 2,
     "title": "Spectral Lantern",
-    "description": "Ghost mail glows brighter and lingers longer.",
+    "description": "Ghost pieces glow brighter and highlight valid drops.",
     "costs": [350, 700],
     "effects": [0.25, 0.5],
     "currency": "coins"

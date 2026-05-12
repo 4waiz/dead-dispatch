@@ -29,23 +29,23 @@
     "name": "Intern Pool",
     "flavor": "Most never made it home, but they still file paperwork.",
     "restoreCost": 1600,
-    "unlocks": { "upgradeKind": "autoSorter" }
+    "unlocks": { "modifier": "stampBlast" }
   },
   {
     "id": "review_desk",
     "floor": 3,
     "name": "Review Desk",
-    "flavor": "Mislabeled parcels get a second opinion here.",
+    "flavor": "Cursed parcels get a second opinion here.",
     "restoreCost": 2200,
-    "unlocks": { "packageType": "mislabeled" }
+    "unlocks": { "packageType": "cursed" }
   },
   {
     "id": "incinerator",
     "floor": 3,
     "name": "Incinerator",
-    "flavor": "Decaying mail ends here. So do most clipboards.",
+    "flavor": "What the mailroom can't sort, it burns.",
     "restoreCost": 3000,
-    "unlocks": { "packageType": "decaying" }
+    "unlocks": { "modifier": "ghostSwap" }
   },
   {
     "id": "vault",
@@ -53,7 +53,7 @@
     "name": "Sealed Vault",
     "flavor": "The seal on the door predates the postal service itself.",
     "restoreCost": 4500,
-    "unlocks": { "modifier": "doubleStamps" }
+    "unlocks": { "packageType": "vault" }
   },
   {
     "id": "void_chamber",
@@ -61,6 +61,6 @@
     "name": "Void Chamber",
     "flavor": "Ghost mail finally has somewhere to drift.",
     "restoreCost": 7000,
-    "unlocks": { "packageType": "ghost" }
+    "unlocks": { "packageType": "void" }
   }
 ]

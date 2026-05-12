@@ -4,20 +4,32 @@ import 'currency.dart';
 /// alongside [ShiftConfig.modifiers]). Keeps the spec rule:
 /// > "Permanent upgrades and per-run bonuses must be separated cleanly."
 enum UpgradeKind {
-  beltSpeedTolerance,
+  bagSoftness,
   comboGrace,
-  stampSupply,
+  stampBlastCharges,
   fragileShield,
   payoutMultiplier,
-  hazardWarning,
+  modifierTelegraph,
   autoSorter,
   ghostBeacon;
 
   String get key => name;
 
-  static UpgradeKind fromKey(String key) =>
-      UpgradeKind.values.firstWhere((u) => u.key == key,
-          orElse: () => UpgradeKind.beltSpeedTolerance);
+  static UpgradeKind fromKey(String key) {
+    // Back-compat for v1 saves that still use the conveyor-era names.
+    switch (key) {
+      case 'beltSpeedTolerance':
+        return UpgradeKind.bagSoftness;
+      case 'stampSupply':
+        return UpgradeKind.stampBlastCharges;
+      case 'hazardWarning':
+        return UpgradeKind.modifierTelegraph;
+    }
+    return UpgradeKind.values.firstWhere(
+      (u) => u.key == key,
+      orElse: () => UpgradeKind.bagSoftness,
+    );
+  }
 }
 
 class UpgradeDescriptor {

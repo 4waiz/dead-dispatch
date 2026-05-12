@@ -1,18 +1,19 @@
-/// Things that go wrong during a shift. Hazards are scheduled by the
-/// `HazardSystem` based on shift difficulty.
+/// Daily Seal modifiers — repurposed from the original "hazard" slot. Each
+/// Daily Seal shift picks exactly one of these via the seeded RNG; the
+/// modifier alters the starting board or scoring rules for that day only.
 enum HazardKind {
-  beltJam,
-  powerFlicker,
-  misrouteChain,
-  surgeRush,
-  blackout,
-  vipWave;
+  frozenFloor,
+  priorityRush,
+  voidSpots,
+  goldenMail,
+  fragileBatch;
 
   String get key => name;
 
-  static HazardKind fromKey(String key) =>
-      HazardKind.values.firstWhere((h) => h.key == key,
-          orElse: () => HazardKind.beltJam);
+  static HazardKind fromKey(String key) => HazardKind.values.firstWhere(
+        (h) => h.key == key,
+        orElse: () => HazardKind.frozenFloor,
+      );
 }
 
 class HazardDescriptor {
@@ -24,9 +25,14 @@ class HazardDescriptor {
   });
 
   final HazardKind kind;
+
+  /// Carried over from the old schema; not consumed by the block puzzle
+  /// today (no timer). Kept so balance.json continues to parse cleanly.
   final Duration duration;
 
-  /// 0..1 — how disruptive. Drives screen shake amplitude, audio mix, etc.
+  /// 0..1 — how intense the modifier is (number of pre-filled cells,
+  /// bonus multiplier strength, etc.). Interpreted per-modifier inside
+  /// `PuzzleSession`.
   final double severity;
 
   final String tutorialHint;
@@ -37,19 +43,4 @@ class HazardDescriptor {
         severity: (j['severity']! as num).toDouble(),
         tutorialHint: j['tutorialHint']! as String,
       );
-}
-
-/// Active hazard on the running shift.
-class ActiveHazard {
-  ActiveHazard({
-    required this.kind,
-    required this.startedAt,
-    required this.endsAt,
-  });
-
-  final HazardKind kind;
-  final Duration startedAt;
-  final Duration endsAt;
-
-  bool isActiveAt(Duration t) => t >= startedAt && t < endsAt;
 }

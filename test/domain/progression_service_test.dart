@@ -1,56 +1,57 @@
 import 'package:dead_dispatch/domain/balance/balance_data.dart';
+import 'package:dead_dispatch/domain/models/block_type.dart';
 import 'package:dead_dispatch/domain/models/currency.dart';
 import 'package:dead_dispatch/domain/models/department.dart';
-import 'package:dead_dispatch/domain/models/package_type.dart';
 import 'package:dead_dispatch/domain/models/player_profile.dart';
 import 'package:dead_dispatch/domain/models/shift_result.dart';
 import 'package:dead_dispatch/domain/services/progression_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-BalanceData _balance() => const BalanceData(
-      shifts: ShiftBalance(
-        baseDuration: Duration(seconds: 60),
-        baseSpawnInterval: Duration(milliseconds: 1500),
-        minSpawnInterval: Duration(milliseconds: 500),
-        spawnIntervalDecayPerLevel: Duration(milliseconds: 50),
-        baseTargetScore: 500,
-        targetScoreGrowth: 1.1,
-        unlockOrder: [PackageType.standard],
-        maxConcurrentBase: 3,
-        maxConcurrentGrowthEvery: 3,
-      ),
-      packages: {},
-      hazards: {},
-      upgrades: {},
-      departments: [
-        DepartmentDescriptor(
-          id: 'lobby',
-          floor: 1,
-          name: 'Lobby',
-          flavor: '',
-          restoreCost: 250,
-          unlocks: DepartmentUnlock(),
-        ),
-        DepartmentDescriptor(
-          id: 'fragile_room',
-          floor: 1,
-          name: 'Fragile Wing',
-          flavor: '',
-          restoreCost: 600,
-          unlocks: DepartmentUnlock(),
-        ),
-      ],
-      economy: EconomyBalance(
-        coinPerScorePoint: 0.1,
-        perfectBonus: 0,
-        comboMultiplierStep: 0,
-        comboMultiplierCap: 1.0,
-        dailyCompletionBonus: 0,
-        failureForgivenessRefund: 0,
-        mysteryParcelMin: 10,
-        mysteryParcelMax: 30,
-      ),
-    );
+const _balance = BalanceData(
+  shifts: ShiftBalance(
+    gridSize: 8,
+    pieceQueueSize: 3,
+    baseTargetScore: 500,
+    targetScoreGrowth: 1.1,
+    unlockOrder: [BlockType.standard],
+    classicNoTimer: true,
+    dailyDuration: null,
+  ),
+  blocks: {},
+  hazards: {},
+  upgrades: {},
+  departments: [
+    DepartmentDescriptor(
+      id: 'lobby',
+      floor: 1,
+      name: 'Lobby',
+      flavor: '',
+      restoreCost: 250,
+      unlocks: DepartmentUnlock(),
+    ),
+    DepartmentDescriptor(
+      id: 'fragile_room',
+      floor: 1,
+      name: 'Fragile Wing',
+      flavor: '',
+      restoreCost: 600,
+      unlocks: DepartmentUnlock(),
+    ),
+  ],
+  economy: EconomyBalance(
+    coinPerScorePoint: 0.1,
+    perfectBonus: 0,
+    comboMultiplierStep: 0,
+    comboMultiplierCap: 1.0,
+    dailyCompletionBonus: 0,
+    failureForgivenessRefund: 0,
+    mysteryParcelMin: 10,
+    mysteryParcelMax: 30,
+    clearLineBonus: 30,
+    multiClearBonusPerExtraLine: 60,
+    perfectClearBonus: 200,
+  ),
+);
 
 ShiftResult _result({int score = 100}) => ShiftResult(
       shiftId: 'test-shift',
@@ -86,7 +87,7 @@ void main() {
     late PlayerProfile profile;
 
     setUp(() {
-      svc = ProgressionService(_balance());
+      svc = const ProgressionService(_balance);
       profile = _freshProfile();
     });
 

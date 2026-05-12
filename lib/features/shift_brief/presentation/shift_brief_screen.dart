@@ -4,13 +4,15 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
 import '../../../di/providers.dart';
-import '../../../domain/balance/balance_data.dart';
+import '../../../domain/models/block_type.dart';
 import '../../../domain/models/hazard.dart';
-import '../../../domain/models/package_type.dart';
 import '../../../domain/models/shift_config.dart';
 import '../../../presentation/gameplay_copy.dart';
 import '../../../presentation/theme/colors.dart';
 
+/// Pre-shift "Ready?" panel. Slim and information-dense: the target
+/// score, the blocks you'll see today, and (for Daily Seal) the active
+/// modifier. The richer per-piece tutorial lives in the Tutorial screen.
 class ShiftBriefScreen extends ConsumerWidget {
   const ShiftBriefScreen({this.dailyDateKey, super.key});
   final String? dailyDateKey;
@@ -21,9 +23,8 @@ class ShiftBriefScreen extends ConsumerWidget {
     final difficulty = ref.read(difficultyServiceProvider);
     final cfg = dailyDateKey != null
         ? difficulty.buildDaily(profile, dateKey: dailyDateKey)
-        : difficulty.buildRegular(profile);
+        : difficulty.buildClassic(profile);
     final level = difficulty.progressionLevelFor(profile);
-    final balance = ref.watch(balanceDataProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -33,7 +34,7 @@ class ShiftBriefScreen extends ConsumerWidget {
           SafeArea(
             child: Column(
               children: [
-                _buildHeader(cfg, level),
+                _Header(cfg: cfg, level: level),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -41,19 +42,16 @@ class ShiftBriefScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const SizedBox(height: 16),
-                        _buildStatRow(cfg),
+                        _StatRow(cfg: cfg),
                         const SizedBox(height: 16),
-                        _buildParcelsCard(cfg, balance),
-                        if (cfg.allowedHazards.isNotEmpty) ...[
+                        _BlocksCard(cfg: cfg),
+                        if (cfg.dailyModifier != null) ...[
                           const SizedBox(height: 12),
-                          _buildHazardsCard(cfg),
-                        ],
-                        if (cfg.modifiers.isNotEmpty) ...[
-                          const SizedBox(height: 12),
-                          _buildModifiersCard(cfg),
+                          _ModifierCard(kind: cfg.dailyModifier!),
                         ],
                         const SizedBox(height: 24),
                         _BeginButton(
+                          isDaily: cfg.isDaily,
                           onPressed: () {
                             final route = dailyDateKey != null
                                 ? '${AppRoutes.game}?daily=$dailyDateKey'
@@ -86,8 +84,15 @@ class ShiftBriefScreen extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Widget _buildHeader(ShiftConfig cfg, int level) {
+class _Header extends StatelessWidget {
+  const _Header({required this.cfg, required this.level});
+  final ShiftConfig cfg;
+  final int level;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
       child: Column(
@@ -103,15 +108,15 @@ class ShiftBriefScreen extends ConsumerWidget {
                 width: 1.5,
               ),
             ),
-            child: const Icon(
-              Icons.receipt_long,
+            child: Icon(
+              cfg.isDaily ? Icons.local_post_office : Icons.dashboard_customize,
               color: AppColors.accentGold,
               size: 30,
             ),
           ),
           const SizedBox(height: 12),
           Text(
-            cfg.isDaily ? 'DAILY BRIEF' : 'SHIFT BRIEF',
+            cfg.isDaily ? 'DAILY SEAL' : 'CLASSIC SHIFT',
             style: const TextStyle(
               color: AppColors.textPrimary,
               fontSize: 22,
@@ -121,15 +126,16 @@ class ShiftBriefScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Sort parcels, hit the target, earn coins, restore the office.',
+            'Drop ghost-mail blocks onto the desk. Fill rows or columns '
+            'to clear them and earn coins.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.textMuted,
               fontSize: 13,
-              height: 1.25,
+              height: 1.3,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
@@ -151,17 +157,14 @@ class ShiftBriefScreen extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Widget _buildStatRow(ShiftConfig cfg) {
-    final secsLeft = cfg.duration.inSeconds;
-    final mins = secsLeft ~/ 60;
-    final secs = secsLeft % 60;
-    final timeStr =
-        mins > 0 ? '$mins:${secs.toString().padLeft(2, '0')}' : '${secsLeft}s';
+class _StatRow extends StatelessWidget {
+  const _StatRow({required this.cfg});
+  final ShiftConfig cfg;
 
-    final speedPct =
-        ((cfg.beltSpeedMultiplier - 1.0) * 100).round().clamp(0, 200);
-
+  @override
+  Widget build(BuildContext context) {
     return Row(
       children: [
         Expanded(
@@ -175,83 +178,89 @@ class ShiftBriefScreen extends ConsumerWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _MiniStat(
-            icon: Icons.timer,
-            label: 'DURATION',
-            value: timeStr,
+            icon: Icons.grid_on,
+            label: 'BOARD',
+            value: '${cfg.gridSize}×${cfg.gridSize}',
             color: AppColors.accentGhost,
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: _MiniStat(
-            icon: Icons.speed,
-            label: 'BELT SPEED',
-            value: '+$speedPct%',
-            color: speedPct >= 20 ? AppColors.accentDanger : AppColors.accentOk,
+            icon: Icons.view_module,
+            label: 'PIECES',
+            value: '${cfg.pieceQueueSize}',
+            color: AppColors.accentOk,
           ),
         ),
       ],
     );
   }
+}
 
-  Widget _buildParcelsCard(ShiftConfig cfg, BalanceData balance) {
+class _BlocksCard extends StatelessWidget {
+  const _BlocksCard({required this.cfg});
+  final ShiftConfig cfg;
+
+  @override
+  Widget build(BuildContext context) {
     return _SectionCard(
-      title: 'WHAT TO SORT',
+      title: "TONIGHT'S MAIL",
       accentColor: AppColors.accentGold,
-      icon: Icons.inventory_2,
+      icon: Icons.mail_outline,
       child: Wrap(
         spacing: 8,
         runSpacing: 8,
-        children: cfg.allowedTypes
-            .map((t) => _ParcelChip(type: t, balance: balance))
-            .toList(),
+        children:
+            cfg.allowedTypes.map((t) => _BlockChip(type: t)).toList(),
       ),
     );
   }
+}
 
-  Widget _buildHazardsCard(ShiftConfig cfg) {
-    return _SectionCard(
-      title: 'ACTIVE HAZARDS',
-      accentColor: AppColors.accentDanger,
-      icon: Icons.warning_amber,
-      child: Column(
-        children: cfg.allowedHazards.map((h) => _HazardRow(kind: h)).toList(),
-      ),
-    );
-  }
+class _ModifierCard extends StatelessWidget {
+  const _ModifierCard({required this.kind});
+  final HazardKind kind;
 
-  Widget _buildModifiersCard(ShiftConfig cfg) {
+  @override
+  Widget build(BuildContext context) {
     return _SectionCard(
-      title: 'SHIFT MODIFIERS',
+      title: 'DAILY MODIFIER',
       accentColor: AppColors.accentGhost,
       icon: Icons.auto_awesome,
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: cfg.modifiers
-            .map(
-              (m) => Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.accentGhost.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: AppColors.accentGhost.withValues(alpha: 0.5),
-                  ),
-                ),
-                child: Text(
-                  m.key.toUpperCase(),
-                  style: const TextStyle(
-                    color: AppColors.accentGhost,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                    letterSpacing: 0.8,
-                  ),
-                ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.accentGhost.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppColors.accentGhost.withValues(alpha: 0.5),
               ),
-            )
-            .toList(),
+            ),
+            child: Text(
+              dailyModifierLabel(kind).toUpperCase(),
+              style: const TextStyle(
+                color: AppColors.accentGhost,
+                fontWeight: FontWeight.w700,
+                fontSize: 11,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              dailyModifierHint(kind),
+              style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 12,
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -278,8 +287,12 @@ class _BgPainter extends CustomPainter {
         paint,
       );
     }
-    final glowRect =
-        Rect.fromLTWH(0, size.height * 0.7, size.width, size.height * 0.3);
+    final glowRect = Rect.fromLTWH(
+      0,
+      size.height * 0.7,
+      size.width,
+      size.height * 0.3,
+    );
     canvas.drawRect(
       glowRect,
       Paint()
@@ -398,149 +411,39 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-class _ParcelChip extends StatelessWidget {
-  const _ParcelChip({required this.type, required this.balance});
-  final PackageType type;
-  final BalanceData balance;
-
-  IconData get _icon {
-    switch (type) {
-      case PackageType.standard:
-        return Icons.inventory_2;
-      case PackageType.priority:
-        return Icons.bolt;
-      case PackageType.fragile:
-        return Icons.warning_amber;
-      case PackageType.frozen:
-        return Icons.ac_unit;
-      case PackageType.ghost:
-        return Icons.auto_awesome;
-      case PackageType.mislabeled:
-        return Icons.help_outline;
-      case PackageType.duplicate:
-        return Icons.content_cut;
-      case PackageType.decaying:
-        return Icons.local_fire_department;
-    }
-  }
+class _BlockChip extends StatelessWidget {
+  const _BlockChip({required this.type});
+  final BlockType type;
 
   @override
   Widget build(BuildContext context) {
-    final col = AppColors.forPackage(type);
+    final col = AppColors.forBlock(type);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: col.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: col.withValues(alpha: 0.5)),
+        border: Border.all(color: col.withValues(alpha: 0.55)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(_icon, color: col, size: 16),
-          const SizedBox(width: 6),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                packageDisplayName(type).toUpperCase(),
-                style: TextStyle(
-                  color: col,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 11,
-                  letterSpacing: 0.4,
-                ),
-              ),
-              Text(
-                briefRuleFor(type, balance),
-                style: const TextStyle(
-                  color: AppColors.textMuted,
-                  fontSize: 10,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HazardRow extends StatelessWidget {
-  const _HazardRow({required this.kind});
-  final HazardKind kind;
-
-  IconData get _icon {
-    switch (kind) {
-      case HazardKind.beltJam:
-        return Icons.block;
-      case HazardKind.misrouteChain:
-        return Icons.shuffle;
-      case HazardKind.surgeRush:
-        return Icons.bolt;
-      case HazardKind.powerFlicker:
-        return Icons.flash_off;
-      case HazardKind.vipWave:
-        return Icons.star;
-      case HazardKind.blackout:
-        return Icons.visibility_off;
-    }
-  }
-
-  String get _desc {
-    switch (kind) {
-      case HazardKind.beltJam:
-        return 'Belt stops — parcels pile up';
-      case HazardKind.misrouteChain:
-        return 'Lane labels randomly swap';
-      case HazardKind.surgeRush:
-        return 'Double spawn rate for a burst';
-      case HazardKind.powerFlicker:
-        return 'Screen flickers, lanes go dark';
-      case HazardKind.vipWave:
-        return 'Only priority & ghost parcels';
-      case HazardKind.blackout:
-        return 'Full blackout — route by memory';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
           Container(
-            width: 32,
-            height: 32,
+            width: 12,
+            height: 12,
             decoration: BoxDecoration(
-              color: AppColors.accentDanger.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
+              color: col,
+              borderRadius: BorderRadius.circular(3),
             ),
-            child: Icon(_icon, color: AppColors.accentDanger, size: 16),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  kind.key.toUpperCase().replaceAll('_', ' '),
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                Text(
-                  _desc,
-                  style: const TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
+          const SizedBox(width: 8),
+          Text(
+            blockDisplayName(type).toUpperCase(),
+            style: TextStyle(
+              color: col,
+              fontWeight: FontWeight.w700,
+              fontSize: 11,
+              letterSpacing: 0.4,
             ),
           ),
         ],
@@ -550,8 +453,9 @@ class _HazardRow extends StatelessWidget {
 }
 
 class _BeginButton extends StatelessWidget {
-  const _BeginButton({required this.onPressed});
+  const _BeginButton({required this.onPressed, required this.isDaily});
   final VoidCallback onPressed;
+  final bool isDaily;
 
   @override
   Widget build(BuildContext context) {
@@ -572,18 +476,18 @@ class _BeginButton extends StatelessWidget {
             ),
           ],
         ),
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.play_arrow_rounded,
               color: Color(0xFF161824),
               size: 28,
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Text(
-              'BEGIN SHIFT',
-              style: TextStyle(
+              isDaily ? 'PLAY DAILY SEAL' : 'PLAY SHIFT',
+              style: const TextStyle(
                 color: Color(0xFF161824),
                 fontWeight: FontWeight.w900,
                 fontSize: 18,

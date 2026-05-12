@@ -27,7 +27,7 @@ class ConfigLoader {
 
       return Ok(_provider.assemble(
         balanceJson: balance,
-        packagesJson: packages,
+        blocksJson: packages,
         hazardsJson: hazards,
         upgradesJson: upgrades,
         departmentsJson: departments,

@@ -140,10 +140,10 @@ class _ShiftResultScreenState extends ConsumerState<ShiftResultScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _StatCard(label: 'Score', value: '${r.score}'),
-              _StatCard(label: 'Max combo', value: '${r.maxCombo}'),
-              _StatCard(label: 'Perfect', value: '${r.perfects}'),
-              _StatCard(label: 'Misses', value: '${r.misses}'),
-              _StatCard(label: 'Destroyed', value: '${r.destroyed}'),
+              _StatCard(label: 'Best score', value: '${profile.bestShiftScore}'),
+              _StatCard(label: 'Lines cleared', value: '${r.linesCleared}'),
+              _StatCard(label: 'Biggest combo', value: '${r.maxCombo}'),
+              _StatCard(label: 'Pieces placed', value: '${r.piecesPlaced}'),
               const SizedBox(height: 16),
               _StatCard(
                 label: Strings.resultPayout,
