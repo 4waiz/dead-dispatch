@@ -1,6 +1,6 @@
 # Dead Dispatch
 
-A hybrid-casual puzzle/management game set in a haunted postal sorting office. You are the night-shift dispatcher in a centuries-old mailroom where parcels misbehave: priority mail demands stamps, fragile boxes shatter on bad routes, decaying mail rots before your eyes, and ghost mail drifts past the rules entirely. Survive timed shifts by tapping the right lane for each parcel before it falls off the belt — earn coins, restore haunted departments of the dead letter office, and chase a daily challenge that's deterministic worldwide.
+A cozy haunted-mailroom **block puzzle** for mobile. You drag colorful ghost-mail pieces onto an 8×8 desk, fill rows and columns to make them clear with a wax-stamp burst, chain combos for bigger payouts, and spend the coins restoring a haunted post office. No timer in Classic Shift. The Daily Seal challenges everyone with the same board on the same day.
 
 Built with **Flutter + Flame**.
 
@@ -8,11 +8,20 @@ Built with **Flutter + Flame**.
 
 ## The game in one minute
 
-- **The loop.** A shift lasts ~75 seconds. Parcels stream down a conveyor toward a gate. When a parcel reaches the gate it waits ~6 seconds for you to tap one of the active lane buttons (north / south / vault / cold / void / review / shred / incinerator). Pick well and your combo multiplier climbs (up to **3.0×**); fumble and the combo resets and the score takes a hit.
-- **Package types matter.** Each of the 8 types (`standard`, `priority`, `fragile`, `frozen`, `mislabeled`, `duplicate`, `decaying`, `ghost`) has its own correct lane, score, belt speed, and rule. Priority parcels need a **stamp** (limited per shift — 3 default, 6 with the `doubleStamps` modifier) for a perfect rating; mislabeled mail goes to **review** unless stamped; duplicates are *meant* to be shredded; decaying mail goes to the **incinerator** before it rots past 95%; fragile mail in the wrong lane is **destroyed**.
-- **Hazards.** Every 8–18 seconds the office misbehaves: `beltJam` (freezes routing timer), `powerFlicker`, `misrouteChain`, `surgeRush` (2× spawn rate), `blackout`, `vipWave` (only priority + ghost spawn). Hazards unlock progressively with player level.
-- **Meta-progression.** Coins earned per shift fund **persistent upgrades** (`Greased Bearings`, `Ink Reserves`, `Phantom Intern`, `Padded Liners`, etc.) and **department restoration** — each restored room of the haunted building unlocks new package types or modifiers. A daily challenge runs off a deterministic seed: same date → same parcel order on every device.
-- **Difficulty curve.** `progressionLevel = (totalShifts ÷ 3) + (restoredDepartments × 2)`. Target score grows as `baseTargetScore × 1.18^level`. Spawn interval decays linearly down to 550 ms minimum. New package types and hazards open up at fixed level breakpoints.
+- **Drag-and-drop.** Three ghost-mail pieces sit in a tray at the bottom of the screen. Drag any one onto the 8×8 desk. Cells under the piece glow cyan when the placement is valid, red when it isn't.
+- **Clear lines.** Fill a complete row or column to clear it — the cells burst gold with a "DISPATCHED!" stamp, score and coins go up.
+- **Combos.** Every placement that clears at least one line increments your combo. The combo multiplier scales up to **3.0×** (configurable in `balance.json`). A non-clearing placement resets the combo to zero.
+- **Game over** when none of the three pieces in your tray can fit anywhere on the board. There is no shift timer in Classic mode — you play as long as you can survive.
+- **Bag rules.** Each piece is a polyomino: single, 2-line, 3-line, 2×2 square, L-shapes (4 orientations), T-shape, zigzag, or a 5-block chunky shape. The bag is weighted toward easier shapes early on so the opening of every shift is forgiving.
+- **Block types.** Eight cosmetic mail flavors — Standard cream, Priority orange, Frozen blue, Cursed purple, Vault gold, Fragile glassy, Void deep-purple, Ghost cyan. Each type has its own colour but the placement and clear rules are uniform.
+- **Power-ups.** Stamp Blast clears a 3×3 area where you tap. Ghost Swap re-rolls all three pieces in the tray. (Return Sender and Lantern Sweep are wired but disabled for v1.)
+- **Daily Seal.** Today's date hashes to a deterministic seed — every player gets the same starting board, same piece sequence, and one of 5 daily modifiers:
+  - **Frozen Floor** — 4 cells pre-frosted on the starting board.
+  - **Priority Rush** — orange Priority pieces pay double coins.
+  - **Void Spots** — 2 cells start blocked; clear lines through them to free them.
+  - **Golden Mail** — gold Vault pieces pay double coins.
+  - **Fragile Batch** — (deferred to v1.1)
+- **Meta-progression.** Coins fund persistent upgrades (Steady Hand, Ink Reserves, Forgiving Foreman, Union Negotiation, etc.) and **department restoration** — restore haunted rooms to unlock new block types, board skins, and power-ups.
 
 ---
 
@@ -23,229 +32,219 @@ Built with **Flutter + Flame**.
 | Concern | Tool |
 |---|---|
 | App framework | Flutter (Dart ≥ 3.4, Flutter ≥ 3.22) |
-| Game engine | [`flame`](https://pub.dev/packages/flame) ^1.18 + `flame_audio` ^2.10 |
-| State / DI | [`flutter_riverpod`](https://pub.dev/packages/flutter_riverpod) ^2.5 |
-| Routing | [`go_router`](https://pub.dev/packages/go_router) ^14.2 |
+| Game engine | Flame ^1.18 (kept for future polish; gameplay itself is Flutter widgets) |
+| State / DI | `flutter_riverpod` ^2.5 |
+| Routing | `go_router` ^14.2 |
 | Persistence | `shared_preferences` ^2.2 |
-| Determinism | `clock` (test-injectable wall clock) + bespoke `SeededRandom` (xorshift32) |
+| Determinism | `clock` + bespoke `SeededRandom` (xorshift32) + `DailySeed` (FNV-1a) |
 | Targets | Android, iOS, Web, Windows, macOS, Linux |
 
 ### Layered architecture
 
-The codebase is strictly layered. Each layer may depend only **inward** (toward `core` + `domain`).
+Strict inward-only dependencies. The domain layer is framework-free — no Flutter, no Flame imports — so scoring, placement, daily-seed, and economy logic is unit-testable in milliseconds.
 
 ```
-presentation/   Flutter screens, widgets, theme       ← features/*/presentation
-game/           Flame world: systems, components       ← features/gameplay/game
-services/       Platform adapters (ads, audio,
-                analytics, haptics, remote config)
-data/           Repositories, local storage,
-                config loader, save migrations
-domain/         Pure Dart models + services
-                (NO Flutter, NO Flame)
-core/           Logger, env, failures, debug flags,
-                perf monitor, clock, RNG sources
+presentation/  Flutter widgets, theme               ← features/*/presentation
+features/gameplay/game/
+  board/       Board, Piece, PieceBag,              pure-Dart puzzle core
+               PlacementService                     (no Flutter, no Flame)
+  session/     PuzzleSession, PuzzleState,
+               PuzzleEvent (sealed)
+  presentation/widgets/                              the Flutter UI for one shift
+services/      Platform adapters
+data/          Repositories, local storage,
+               config loader, save migrations
+domain/        Models + services (framework-free)
+core/          Logger, env, failures, perf, RNG,
+               clock, debug flags
 ```
 
-DI is centralised in [lib/di/providers.dart](lib/di/providers.dart). All async "must succeed" init (storage open, balance JSON load, profile load) runs in [lib/app/bootstrap.dart](lib/app/bootstrap.dart) and overrides the throwing default providers before `runApp`. Any boot failure surfaces a visible error screen rather than a blank app.
+DI lives in [lib/di/providers.dart](lib/di/providers.dart). All async "must succeed" init (storage open, balance JSON load, profile load) runs in [lib/app/bootstrap.dart](lib/app/bootstrap.dart) and overrides the throwing default providers before `runApp`.
 
 ### Code map
 
 ```
 lib/
-├── main.dart                       ← single-line entrypoint → bootstrap()
-├── app/
-│   ├── bootstrap.dart              ← async init, ProviderScope overrides
-│   ├── app.dart                    ← MaterialApp.router root
-│   ├── app_router.dart             ← go_router config (11 routes)
-│   ├── app_theme.dart, app_lifecycle.dart, flavors.dart
-├── core/
-│   ├── perf/perf_monitor.dart      ← rolling frame-time sampler
-│   ├── rng/random_source.dart      ← SeededRandomSource + SystemRandomSource
-│   ├── time/clock.dart             ← AppClock abstraction
-│   ├── logger.dart, env.dart, debug_flags.dart, failures.dart, result.dart, constants.dart
-├── domain/                         ← pure Dart, framework-free
-│   ├── balance/                    ← BalanceData, BalanceProvider
-│   ├── models/                     ← GamePackage, PackageType, Hazard,
-│   │                                  ShiftConfig, ShiftResult, PlayerProfile,
-│   │                                  Wallet, OwnedUpgrade, Department, …
-│   └── services/                   ← ScoreService, RoutingService,
-│                                      DifficultyService, EconomyService,
-│                                      ProgressionService, SeededRandom, DailySeed
-├── data/
-│   ├── sources/                    ← SharedPrefsStorage, ConfigLoader, AssetPreloader
-│   ├── repositories/               ← SaveRepository, ProgressionRepository,
-│   │                                  SettingsRepository, DailyRepository
-│   └── migrations/save_migrator.dart  ← versioned save migrations
-├── services/                       ← AdsService, AudioService, HapticsService,
-│                                      AnalyticsService, RemoteConfigService
-├── di/providers.dart               ← Riverpod composition root
-├── presentation/                   ← shared widgets, theme, gameplay copy
+├── main.dart                                ← bootstrap()
+├── app/                                     ← bootstrap, MaterialApp, theme, router, flavors
+├── core/                                    ← perf, rng, time, logger, env, failures, constants
+├── domain/                                  ← pure Dart
+│   ├── balance/                             ← BalanceData (blocks + economy + shifts)
+│   ├── models/                              ← BlockType, Piece records via package.dart,
+│   │                                          ShiftConfig, ShiftResult, PlayerProfile,
+│   │                                          Wallet, OwnedUpgrade, Department, Hazard
+│   └── services/                            ← ScoreService, DifficultyService,
+│                                              EconomyService, ProgressionService,
+│                                              SeededRandom, DailySeed
+├── data/                                    ← SaveRepository, ProgressionRepository,
+│                                              SettingsRepository, DailyRepository,
+│                                              ConfigLoader, SaveMigrator
+├── services/                                ← AdsService, AudioService, HapticsService,
+│                                              AnalyticsService, RemoteConfigService
+├── di/providers.dart                        ← Riverpod composition root
+├── presentation/                            ← shared theme, widgets, gameplay_copy
 └── features/
-    ├── splash/, menu/, tutorial/, shift_brief/,
-    ├── shift_result/, upgrades/, meta/ (departments),
-    ├── daily_challenge/, settings/, debug/
+    ├── splash/, menu/, tutorial/, shift_brief/, shift_result/,
+    ├── upgrades/, meta/ (departments), daily_challenge/, settings/, debug/
     └── gameplay/
-        ├── presentation/game_screen.dart        ← Flutter HUD + GameWidget host
+        ├── presentation/
+        │   ├── game_screen.dart             ← composes board + tray + HUD
+        │   └── widgets/
+        │       ├── board_widget.dart        ← 8×8 grid + DragTarget
+        │       ├── piece_widget.dart        ← polyomino renderer
+        │       ├── piece_tray_widget.dart   ← 3-slot Draggable dock
+        │       ├── clear_burst_overlay.dart ← "DISPATCHED!" stamp burst
+        │       └── power_up_dock.dart       ← Stamp Blast + Ghost Swap
         └── game/
-            ├── dead_dispatch_game.dart          ← FlameGame subclass
-            ├── game_session.dart                ← shift orchestrator (events + state)
-            ├── game_state.dart                  ← immutable runtime snapshot
-            ├── game_events.dart                 ← sealed GameEvent hierarchy
-            ├── systems/
-            │   ├── spawner_system.dart          ← package spawning + jitter
-            │   ├── routing_system.dart          ← gate detection + timeout
-            │   ├── hazard_system.dart           ← weighted hazard scheduler
-            │   └── feedback_system.dart         ← SFX + haptics on session events
-            └── components/
-                ├── belt_component.dart          ← scrolling conveyor
-                ├── package_component.dart       ← parcel sprite/rect
-                ├── background_component.dart, hazard_overlay_component.dart,
-                  particle_burst.dart, score_popup.dart
+            ├── board/
+            │   ├── board.dart               ← immutable grid + clear-lines logic
+            │   ├── piece.dart               ← polyomino + cell offsets
+            │   ├── piece_library.dart       ← 13 canonical shapes + weights
+            │   ├── piece_bag.dart           ← deterministic generator
+            │   └── placement_service.dart   ← pure place + clear facade
+            └── session/
+                ├── puzzle_session.dart      ← shift orchestrator
+                ├── puzzle_state.dart        ← immutable snapshot
+                └── puzzle_events.dart       ← sealed event hierarchy
 ```
 
 ### Runtime data flow — one shift
 
 ```
-User taps "Play"
+User taps "Play Shift" or "Daily Seal"
    │
    ▼
 GameScreen.initState():
-   ├─ DifficultyService.buildRegular(profile) → ShiftConfig
-   ├─ new GameSession(config, balance)
-   └─ new DeadDispatchGame(session, balance, audio, haptics, perf, routingService)
+   ├─ DifficultyService.buildClassic(profile)        (or buildDaily for the Daily Seal)
+   ├─ new PuzzleSession(config, balance, profile)
+   │     ├─ Board.empty(8) + daily-modifier pre-fills
+   │     ├─ PieceBag(seed, allowedTypes).nextN(3)    initial queue
+   │     └─ ScoreService(balance)
+   └─ session.start() → emits QueueRefilledEvent
    │
    ▼
-Flame onLoad: registers BackgroundComponent + BeltComponent + HazardOverlay,
-              instantiates SpawnerSystem / HazardSystem / RoutingSystem /
-              FeedbackSystem, then session.start().
+Player drags a piece (Draggable<Piece>):
+   ├─ onDragStarted → session.onPiecePickedUp(piece) → PiecePickedUpEvent
+   │                  (paper-flick SFX, selection haptic)
+   ├─ BoardWidget.onMove → live valid/invalid cyan/red preview
+   └─ onAcceptWithDetails → session.tryPlace(pieceId, anchorRow, anchorCol)
    │
    ▼
-Flame update(dt) every frame:
-   1. perf.record(dt × 1000)
-   2. session.tick(dt) — advances elapsed, fires ShiftEndedEvent on timeout
-   3. SpawnerSystem.tick → maybe spawn (respects maxConcurrent, surgeRush 2× rate)
-   4. HazardSystem.tick  → expire active hazards, maybe trigger new (weighted by
-                            inverse-severity, sampled with SeededRandom)
-   5. RoutingSystem.tick → detect package-at-gate, arm 6 s timeout,
-                            on timeout auto-miss; on player lane tap, call
-                            RoutingService.resolve() → SortOutcome
-   6. session.onPackageResolved → ScoreService.registerOutcome,
-                                   emits PackageResolvedEvent + ComboChangedEvent
-   7. FeedbackSystem (listening on session.events) fires SFX + haptics
+PuzzleSession.tryPlace:
+   1. PlacementService.tryPlace(board, piece, anchor) → PlacementOutcome (or null)
+   2. If null → InvalidDropEvent (dull-thud SFX, failure haptic)
+   3. Else:
+        ScoreService.registerPlacement(type, cellsPlaced, linesCleared, boardCleared)
+           ├─ per-cell base score for the placement
+           ├─ + clearLineBonus × linesCleared
+           ├─ + multiClearBonusPerExtraLine × (linesCleared − 1)
+           ├─ + perfectBonus if any clear
+           ├─ + perfectClearBonus if board empty after clear
+           └─ scaled by comboMultiplier (1 + combo × step, capped)
+        Apply daily-modifier coin multiplier (Golden Mail / Priority Rush)
+        Drop the piece from the queue; if queue empty, PieceBag.nextN refills it.
+   4. Emit: PiecePlacedEvent, LinesClearedEvent (if any),
+            ComboChangedEvent (on change), BoardClearedEvent (if any),
+            ShiftTargetReachedEvent (first crossing), QueueRefilledEvent (on refill).
+   5. PlacementService.isGameOver(board, queue) → GameOverEvent + ShiftResult
    │
    ▼
-session emits ShiftEndedEvent → GameScreen pushReplacement(/result, result)
-   │
-   ▼
-ShiftResultScreen: ProgressionService.recordShift, EconomyService.payoutForShift,
-                   optional rewarded ad for doubled coins / mystery parcel,
-                   SaveRepository.save
+GameOverEvent → context.pushReplacement('/result', ShiftResult)
+ShiftResultScreen → ProgressionService.recordShift + EconomyService.payoutForShift,
+                    optional rewarded ad for doubled coins, SaveRepository.save.
 ```
 
 ### Key design decisions
 
-1. **Domain is framework-free.** Nothing under `lib/domain/` imports `package:flutter` or `package:flame`. Scoring, routing, difficulty, economy, and progression are unit-testable in milliseconds.
-2. **Balancing is data, not code.** Every tunable lives in `assets/config/*.json` (`balance.json`, `packages.json`, `hazards.json`, `upgrades.json`, `departments.json`, `shifts.json`). `BalanceProvider` assembles a `BalanceData` value object at boot. Future remote-config swap is one provider override.
-3. **Per-run ≠ persistent.** Per-run boosts live in `ShiftConfig.modifiers` (e.g. `doubleStamps`). Persistent upgrades live in `PlayerProfile.upgrades`. The boundary is deliberate — mixing them was called out in the spec.
-4. **Deterministic daily challenges.** `DailySeed.seedFor(dateKey)` is FNV-1a over the YYYY-MM-DD string. That seed feeds a `SeededRandom` (xorshift32) that drives every spawn, hazard, and modifier roll. Same date → identical shift on every device on Earth.
-5. **Service abstractions for everything platform-shaped.** `AdsService`, `AnalyticsService`, `AudioService`, `HapticsService`, `RemoteConfigService` each have an interface + a default offline stub (`LoggingAnalyticsService`, `OfflineRewardingAdsService`, etc.). The game is fully playable offline; release flavors swap in real SDKs via [lib/app/flavors.dart](lib/app/flavors.dart).
-6. **Versioned save migrations.** `AppConstants.saveSchemaVersion` + `SaveMigrator._migrations` — bump the version, register a transformer, test every step.
-7. **Allocation-free hot paths.** `spawner_system.dart`, `routing_system.dart`, `hazard_system.dart` avoid per-frame closures and list allocations. Target: ≤ 16.6 ms/frame on a Pixel 4a. `PerfMonitor` exposes a rolling histogram on the debug screen.
+1. **Domain is framework-free.** Scoring, placement, line-clear, daily-seed, and economy live under `lib/domain/` and `lib/features/gameplay/game/{board,session}/`. Zero Flutter imports. All testable in pure Dart.
+2. **Balancing is data, not code.** Every tunable lives in `assets/config/*.json` (`balance.json`, `packages.json` (block descriptors), `hazards.json` (daily modifiers), `upgrades.json`, `departments.json`, `shifts.json`). `BalanceProvider` assembles a single immutable `BalanceData` at boot.
+3. **Deterministic Daily Seal.** `DailySeed.seedFor(YYYY-MM-DD)` is FNV-1a over the date string. That seed feeds a `SeededRandom` (xorshift32) used by both the daily-modifier roll and the `PieceBag`. Same date → same starting board, same piece sequence, on every device.
+4. **Sealed events.** `PuzzleSession` exposes a `Stream<PuzzleEvent>` of 10 typed events. The HUD listens for visual updates; an audio/haptics adapter listens for SFX cues. Logic and presentation stay decoupled.
+5. **Service abstractions everywhere platform-shaped.** `AdsService`, `AnalyticsService`, `AudioService`, `HapticsService`, `RemoteConfigService` each have an interface + an offline stub. Release flavors swap in real SDKs via [lib/app/flavors.dart](lib/app/flavors.dart).
+6. **Versioned save migrations.** `AppConstants.saveSchemaVersion` is currently `2`. The `v1 → v2` migration renames conveyor-era upgrade kinds (`beltSpeedTolerance` → `bagSoftness`, etc.) so any pre-pivot saves still load.
+7. **Power-ups are state-machine friendly.** Stamp Blast clears a 3×3 area and re-checks game over (a blast can save the player); Ghost Swap re-rolls the queue and re-checks game over too. Both consume a charge.
 
-### Game-loop contract
+### Configs at a glance
 
-| Component | Owns | Talks to |
-|---|---|---|
-| `DeadDispatchGame` | The Flame world, component list, package lifecycle | systems, `GameSession` |
-| `GameSession` | Authoritative `GameState`, `ScoreService`, `SeededRandom`, event stream | every system + `GameScreen` |
-| `SpawnerSystem` | When the next package appears, which type | session.rng, game.addPackage |
-| `RoutingSystem` | Gate detection, 6 s routing timeout, calls `RoutingService.resolve` | session, game, RoutingService |
-| `HazardSystem` | Hazard schedule (8–18 s cadence, weighted-by-inverse-severity sampling), expiry | session, balance |
-| `FeedbackSystem` | SFX + haptics on `GameEvent` stream | AudioService, HapticsService |
-| `GameScreen` (Flutter) | HUD (score, timer, combo, stamps), lane buttons, pause menu | session.events, game.onLaneTapped/onStampTapped |
-
-`GameSession` publishes a sealed `GameEvent` stream — `PackageSpawnedEvent`, `PackageResolvedEvent`, `ComboChangedEvent`, `HazardStartedEvent`, `HazardEndedEvent`, `PendingPackageChangedEvent`, `ShiftEndedEvent`. The HUD and feedback layer are pure subscribers; they never mutate game state.
-
-### Persistence
-
-A single `PlayerProfile` JSON blob is the root: wallet, owned upgrades, restored departments, daily-challenge attempts, settings, tutorial flag, totals, best score. Atomicity by design — one write per save, no partial states. Settings, daily attempts, and progression each have a thin repository that delegates to `SaveRepository`. Migrations are explicit and tested ([test/data/save_migrator_test.dart](test/data/save_migrator_test.dart)).
-
-### Testing
-
-| Concern | Test file |
-|---|---|
-| Seeded RNG determinism | [test/domain/seeded_random_test.dart](test/domain/seeded_random_test.dart) |
-| Daily-seed stability across dates | [test/domain/daily_seed_test.dart](test/domain/daily_seed_test.dart) |
-| Score + combo math | [test/domain/score_service_test.dart](test/domain/score_service_test.dart) |
-| Economy: purchases, mystery roll, payouts | [test/domain/economy_service_test.dart](test/domain/economy_service_test.dart) |
-| Difficulty curve, type/hazard unlock order | [test/domain/difficulty_service_test.dart](test/domain/difficulty_service_test.dart) |
-| Routing for every package type | [test/domain/routing_service_test.dart](test/domain/routing_service_test.dart) |
-| Progression / department gating | [test/domain/progression_service_test.dart](test/domain/progression_service_test.dart) |
-| Model JSON round-trip | [test/domain/models_serialization_test.dart](test/domain/models_serialization_test.dart) |
-| Save migration v0 → vN | [test/data/save_migrator_test.dart](test/data/save_migrator_test.dart) |
-
-Widget and integration tests are intentionally minimal — domain coverage surfaces regressions fastest.
-
----
-
-## Balancing knobs (the file you'll touch most)
-
-[assets/config/balance.json](assets/config/balance.json) — the core economy & shift pacing.
+[assets/config/balance.json](assets/config/balance.json) — the file you'll edit most.
 
 ```jsonc
 {
   "shifts": {
-    "baseDurationMs": 75000,
-    "baseSpawnIntervalMs": 1800,
-    "minSpawnIntervalMs": 550,
-    "spawnIntervalDecayPerLevelMs": 60,
-    "baseTargetScore": 600,
-    "targetScoreGrowth": 1.18,
-    "maxConcurrentBase": 4,
-    "maxConcurrentGrowthEvery": 3
+    "gridSize": 8,
+    "pieceQueueSize": 3,
+    "classicNoTimer": true,
+    "dailyDurationMs": null,
+    "baseTargetScore": 1200,
+    "targetScoreGrowth": 1.12,
+    "unlockOrder": ["standard","priority","frozen","cursed","vault","fragile","void","ghost"]
   },
   "economy": {
     "coinPerScorePoint": 0.10,
     "perfectBonus": 25,
     "comboMultiplierStep": 0.05,
     "comboMultiplierCap": 3.0,
-    "dailyCompletionBonus": 100,
+    "dailyCompletionBonus": 150,
     "failureForgivenessRefund": 0.5,
     "mysteryParcelMin": 50,
-    "mysteryParcelMax": 250
+    "mysteryParcelMax": 250,
+    "clearLineBonus": 60,
+    "multiClearBonusPerExtraLine": 90,
+    "perfectClearBonus": 400
   }
 }
 ```
 
-JSON edits are hot-reloadable in dev — `flutter run`, save the file, hot-restart.
+JSON edits are hot-reloadable in dev — `flutter run`, save the file, hot-restart. For more guidance see [docs/BALANCING.md](docs/BALANCING.md) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (note: both still describe the pre-pivot routing game; they will be refreshed in a follow-up pass).
 
-For richer guidance (adding a new package type, adding a new hazard, monetisation knobs) see [docs/BALANCING.md](docs/BALANCING.md). For the layered architecture in depth see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+### Testing
+
+| Concern | Test file |
+|---|---|
+| Seeded RNG determinism | [test/domain/seeded_random_test.dart](test/domain/seeded_random_test.dart) |
+| Daily-seed stability | [test/domain/daily_seed_test.dart](test/domain/daily_seed_test.dart) |
+| Score + combo math | [test/domain/score_service_test.dart](test/domain/score_service_test.dart) |
+| Economy: purchases, mystery roll, payouts | [test/domain/economy_service_test.dart](test/domain/economy_service_test.dart) |
+| Difficulty curve + Daily Seal determinism | [test/domain/difficulty_service_test.dart](test/domain/difficulty_service_test.dart) |
+| Progression / department gating | [test/domain/progression_service_test.dart](test/domain/progression_service_test.dart) |
+| Model JSON round-trip + legacy kind migration | [test/domain/models_serialization_test.dart](test/domain/models_serialization_test.dart) |
+| Save migration v0→v1, v1→v2 | [test/data/save_migrator_test.dart](test/data/save_migrator_test.dart) |
+| Board: place, immutability, clear, game over | [test/features/gameplay/board/board_test.dart](test/features/gameplay/board/board_test.dart) |
+| Placement service: valid/invalid/edge | [test/features/gameplay/board/placement_service_test.dart](test/features/gameplay/board/placement_service_test.dart) |
+| Piece bag determinism + weighting | [test/features/gameplay/board/piece_bag_test.dart](test/features/gameplay/board/piece_bag_test.dart) |
+| Puzzle session orchestration + events | [test/features/gameplay/session/puzzle_session_test.dart](test/features/gameplay/session/puzzle_session_test.dart) |
+
+77 tests at last check; `flutter test` should be green end-to-end.
 
 ---
 
 ## Running the game
 
-```bash
+```powershell
 flutter pub get
-flutter analyze
-flutter test
+flutter analyze            # must be 0 errors
+flutter test               # must be green
 flutter run -d windows     # or -d chrome, -d <android-device-id>
+flutter build apk --release   # verify no Debug tile on the menu
 ```
 
-Manual smoke test:
-
-1. Splash → Main Menu shows wallet + best score.
-2. First launch routes to the 4-slide Tutorial.
-3. Shift Brief → tap **Play**.
-4. Belt scrolls, packages spawn, lane buttons appear when a parcel reaches the gate, the stamp button consumes stamps, the combo meter climbs on perfects, hazards fire visually (jam light, blackout vignette).
-5. Timer hits zero → Shift Result with score breakdown.
-6. Rewarded-ad stub doubles coins.
-7. Upgrades / Departments persist across app restart.
-8. Daily Challenge: same seed on two launches → same parcel order (determinism check).
+### Manual smoke test
+1. Splash → Main Menu (or Tutorial on first launch).
+2. Main Menu: title, coin balance, **Play Shift** primary CTA, **Daily Seal** secondary CTA, Restore Office card, Upgrades / Departments / Settings tiles.
+3. Tap **Play Shift** → Brief screen → tap **PLAY SHIFT**.
+4. Game screen renders an 8×8 board, 3 colourful ghost-mail pieces in the tray, HUD (score / best / combo / coins / pause).
+5. Drag a piece — cells glow cyan when valid, red when not. Drop on valid cells → soft-tap SFX, gentle haptic.
+6. Complete a row or column → gold "DISPATCHED!" burst, score and coins update, combo ticks up.
+7. Place all 3 pieces → tray auto-refills.
+8. Use **Ghost Swap** (bottom dock) → tray re-rolls. **Stamp Blast** → arm, then tap the board to clear a 3×3.
+9. Game over when no piece fits → result screen with Score / Best / Lines cleared / Biggest combo / Coins, Play Again + Restore Office + Back-to-menu buttons.
+10. **Daily Seal**: two launches with the same date → identical initial board and piece sequence (determinism check). Today's modifier is shown on the daily entry screen and the brief.
+11. Settings: haptics off → invalid drop doesn't vibrate.
+12. Restart app → coins, best score, restored departments, upgrades persist; save migrates cleanly.
+13. Release build (`flutter build apk --release`) → no Debug tile on the menu.
 
 ---
 
 ## Status
 
-The codebase is at the **playable v1** mark per [PLAN.md](PLAN.md): the Flame gameplay world, score loop, hazards, daily challenge, upgrades, departments, settings, persistence, and the full menu chain are wired end-to-end. Real AdMob / Firebase / final art + audio swaps are flavor-gated TODOs at [lib/di/providers.dart:127-138](lib/di/providers.dart#L127-L138).
+Block-puzzle pivot complete: Classic Shift + Daily Seal end-to-end, full menu chain, persistence, deterministic dailies, Stamp Blast + Ghost Swap. Real AdMob / Firebase / final art + audio are flavor-gated TODOs at [lib/di/providers.dart](lib/di/providers.dart).

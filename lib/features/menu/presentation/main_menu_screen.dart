@@ -71,7 +71,7 @@ class MainMenuScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 4),
                         const Text(
-                          'Haunted postal sorting • sort or suffer',
+                          'Haunted block puzzle • drop, clear, repeat',
                           style: TextStyle(
                             color: AppColors.textMuted,
                             fontSize: 12,
@@ -369,7 +369,7 @@ class _RestorationCard extends StatelessWidget {
                         ),
                       ),
                       const Text(
-                        'Sort shifts to earn coins and rebuild the office.',
+                        'Clear lines to earn coins and rebuild the office.',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(

@@ -23,9 +23,9 @@ class _TutorialScreenState extends ConsumerState<TutorialScreen> {
 
   static const _steps = <String>[
     Strings.tutorialIntro,
-    Strings.tutorialPriority,
-    Strings.tutorialFragile,
-    Strings.tutorialJam,
+    Strings.tutorialFillRow,
+    Strings.tutorialClearCoins,
+    Strings.tutorialComboDaily,
   ];
 
   Future<void> _next() async {

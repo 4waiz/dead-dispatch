@@ -5,6 +5,8 @@ import '../core/logger.dart';
 enum SoundId {
   uiTap,
   uiBack,
+  // Conveyor-era sounds kept so any in-flight call sites still resolve;
+  // they no longer fire from gameplay.
   packageSpawn,
   packageStamp,
   packageSorted,
@@ -15,7 +17,15 @@ enum SoundId {
   hazardClear,
   shiftStart,
   shiftEnd,
-  reward;
+  reward,
+  // Block-puzzle sounds.
+  piecePickUp,
+  piecePlaced,
+  linesCleared,
+  comboChime,
+  invalidDrop,
+  gameOverSigh,
+  coinSparkle;
 
   String get key => name;
 }

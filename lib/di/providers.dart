@@ -16,9 +16,12 @@ import '../data/sources/config_loader.dart';
 import '../data/sources/local_storage.dart';
 import '../domain/balance/balance_data.dart';
 import '../domain/models/player_profile.dart';
+import '../domain/models/block_type.dart';
 import '../domain/services/difficulty_service.dart';
 import '../domain/services/economy_service.dart';
 import '../domain/services/progression_service.dart';
+import '../features/gameplay/game/board/piece_bag.dart';
+import '../features/gameplay/game/board/placement_service.dart';
 import '../services/ads_service.dart';
 import '../services/analytics_service.dart';
 import '../services/audio_service.dart';
@@ -102,6 +105,22 @@ final economyServiceProvider = Provider<EconomyService>(
 
 final progressionServiceProvider = Provider<ProgressionService>(
   (ref) => ProgressionService(ref.watch(balanceDataProvider)),
+);
+
+/// Block-puzzle services. `PlacementService` is stateless and pure;
+/// `pieceBagFactoryProvider` returns a function so each shift can
+/// construct its own seeded bag without sharing RNG state.
+final placementServiceProvider =
+    Provider<PlacementService>((_) => const PlacementService());
+
+typedef PieceBagFactory = PieceBag Function({
+  required int seed,
+  required List<BlockType> allowedTypes,
+});
+
+final pieceBagFactoryProvider = Provider<PieceBagFactory>(
+  (_) => ({required int seed, required List<BlockType> allowedTypes}) =>
+      PieceBag(seed: seed, allowedTypes: allowedTypes),
 );
 
 // -----------------------------------------------------------------------------

@@ -13,7 +13,6 @@ import '../../../l10n/strings_en.dart';
 import '../../../presentation/gameplay_copy.dart';
 import '../../../presentation/theme/colors.dart';
 import '../../../presentation/widgets/primary_button.dart';
-import '../../../presentation/widgets/reward_dialog.dart';
 import '../../../services/ads_service.dart';
 import '../../../services/analytics_service.dart';
 
@@ -27,7 +26,6 @@ class ShiftResultScreen extends ConsumerStatefulWidget {
 
 class _ShiftResultScreenState extends ConsumerState<ShiftResultScreen> {
   bool _doubled = false;
-  bool _mysteryClaimed = false;
   int _payout = 0;
 
   @override
@@ -96,32 +94,6 @@ class _ShiftResultScreenState extends ConsumerState<ShiftResultScreen> {
     }, (_) {});
   }
 
-  Future<void> _onMystery() async {
-    final ads = ref.read(adsServiceProvider);
-    final economy = ref.read(economyServiceProvider);
-    final result = await ads.showRewarded(AdPlacement.mysteryParcel);
-    result.fold((outcome) {
-      if (outcome is AdRewardGranted) {
-        final reward = economy.rollMysteryParcelReward();
-        ref.read(playerProfileProvider.notifier).mutate((p) {
-          economy.award(p, reward);
-        });
-        ref.read(playerProfileProvider.notifier).persist();
-        setState(() => _mysteryClaimed = true);
-        if (!mounted) return;
-        showDialog<void>(
-          context: context,
-          builder: (_) => RewardDialog(
-            title: 'Mystery parcel',
-            body: 'You found $reward coins inside!',
-            confirmLabel: 'Nice',
-            onConfirm: () => Navigator.of(context).pop(),
-          ),
-        );
-      }
-    }, (_) {});
-  }
-
   @override
   Widget build(BuildContext context) {
     final r = widget.result;
@@ -132,17 +104,17 @@ class _ShiftResultScreenState extends ConsumerState<ShiftResultScreen> {
     final coins = profile.wallet.get(Currency.coins);
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text(Strings.shiftEnd)),
+      appBar: AppBar(title: const Text(Strings.gameOverTitle)),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _StatCard(label: 'Score', value: '${r.score}'),
-              _StatCard(label: 'Best score', value: '${profile.bestShiftScore}'),
-              _StatCard(label: 'Lines cleared', value: '${r.linesCleared}'),
-              _StatCard(label: 'Biggest combo', value: '${r.maxCombo}'),
+              _StatCard(label: Strings.bestScore, value: '${profile.bestShiftScore}'),
+              _StatCard(label: Strings.linesCleared, value: '${r.linesCleared}'),
+              _StatCard(label: Strings.biggestCombo, value: '${r.maxCombo}'),
               _StatCard(label: 'Pieces placed', value: '${r.piecesPlaced}'),
               const SizedBox(height: 16),
               _StatCard(
@@ -155,7 +127,7 @@ class _ShiftResultScreenState extends ConsumerState<ShiftResultScreen> {
                 nextRoom: nextRoom,
                 onTap: () => context.go(AppRoutes.departments),
               ),
-              const Spacer(),
+              const SizedBox(height: 20),
               if (!_doubled)
                 PrimaryButton(
                   label: Strings.resultDouble,
@@ -165,17 +137,24 @@ class _ShiftResultScreenState extends ConsumerState<ShiftResultScreen> {
                   onPressed: _payout > 0 ? _onDouble : null,
                 ),
               const SizedBox(height: 8),
-              if (!_mysteryClaimed)
-                PrimaryButton(
-                  label: Strings.resultMystery,
-                  icon: Icons.card_giftcard,
-                  color: AppColors.surfaceHi,
-                  foreground: AppColors.textPrimary,
-                  onPressed: _onMystery,
-                ),
+              PrimaryButton(
+                label: Strings.resultPlayAgain,
+                icon: Icons.replay,
+                color: AppColors.accentGold,
+                foreground: AppColors.background,
+                onPressed: () => context.pushReplacement(AppRoutes.brief),
+              ),
               const SizedBox(height: 8),
               PrimaryButton(
-                label: 'Continue',
+                label: Strings.resultRestoreOffice,
+                icon: Icons.apartment,
+                color: AppColors.surfaceHi,
+                foreground: AppColors.textPrimary,
+                onPressed: () => context.go(AppRoutes.departments),
+              ),
+              const SizedBox(height: 8),
+              PrimaryButton(
+                label: 'Back to menu',
                 onPressed: () => context.go(AppRoutes.menu),
               ),
             ],

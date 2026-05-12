@@ -3,11 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../di/providers.dart';
 import '../../../domain/models/currency.dart';
-import '../../../domain/models/upgrade.dart';
 import '../../../l10n/strings_en.dart';
-import '../../../services/analytics_service.dart';
 import '../../../presentation/theme/colors.dart';
 import '../../../presentation/widgets/currency_chip.dart';
+import '../../../services/analytics_service.dart';
 
 class UpgradeScreen extends ConsumerWidget {
   const UpgradeScreen({super.key});
