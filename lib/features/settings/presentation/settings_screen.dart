@@ -4,8 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../di/providers.dart';
 import '../../../domain/models/player_profile.dart';
 import '../../../l10n/strings_en.dart';
-import '../../../services/analytics_service.dart';
 import '../../../presentation/theme/colors.dart';
+import '../../../presentation/widgets/screen_scaffold.dart';
+import '../../../services/analytics_service.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -26,71 +27,109 @@ class SettingsScreen extends ConsumerWidget {
       );
     }
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text(Strings.settingsTitle)),
+    return ScreenScaffold(
+      title: Strings.settingsTitle,
+      padding: EdgeInsets.zero,
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         children: [
-          ListTile(
-            title: const Text(Strings.settingsMusic,
-                style: TextStyle(color: AppColors.textPrimary)),
-            subtitle: Slider(
-              value: s.musicVolume,
+          _SettingsTile(
+            child: ListTile(
+              title: const Text(
+                Strings.settingsMusic,
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              subtitle: Slider(
+                value: s.musicVolume,
+                activeColor: AppColors.accentGold,
+                inactiveColor: AppColors.outline,
+                onChanged: (v) async {
+                  await audio.setMusicVolume(v);
+                  await replace(s.copyWith(musicVolume: v), 'musicVolume');
+                },
+              ),
+            ),
+          ),
+          _SettingsTile(
+            child: ListTile(
+              title: const Text(
+                Strings.settingsSfx,
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              subtitle: Slider(
+                value: s.sfxVolume,
+                activeColor: AppColors.accentGold,
+                inactiveColor: AppColors.outline,
+                onChanged: (v) async {
+                  await audio.setSfxVolume(v);
+                  await replace(s.copyWith(sfxVolume: v), 'sfxVolume');
+                },
+              ),
+            ),
+          ),
+          _SettingsTile(
+            child: SwitchListTile(
+              title: const Text(
+                Strings.settingsHaptics,
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              value: s.hapticsEnabled,
               activeColor: AppColors.accentGold,
-              inactiveColor: AppColors.outline,
               onChanged: (v) async {
-                await audio.setMusicVolume(v);
-                await replace(s.copyWith(musicVolume: v), 'musicVolume');
+                haptics.isEnabled = v;
+                await replace(s.copyWith(hapticsEnabled: v), 'hapticsEnabled');
               },
             ),
           ),
-          ListTile(
-            title: const Text(Strings.settingsSfx,
-                style: TextStyle(color: AppColors.textPrimary)),
-            subtitle: Slider(
-              value: s.sfxVolume,
+          _SettingsTile(
+            child: SwitchListTile(
+              title: const Text(
+                Strings.settingsReducedMotion,
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              value: s.reducedMotion,
               activeColor: AppColors.accentGold,
-              inactiveColor: AppColors.outline,
-              onChanged: (v) async {
-                await audio.setSfxVolume(v);
-                await replace(s.copyWith(sfxVolume: v), 'sfxVolume');
-              },
+              onChanged: (v) async =>
+                  replace(s.copyWith(reducedMotion: v), 'reducedMotion'),
             ),
           ),
-          SwitchListTile(
-            title: const Text(Strings.settingsHaptics,
-                style: TextStyle(color: AppColors.textPrimary)),
-            value: s.hapticsEnabled,
-            activeThumbColor: AppColors.accentGold,
-            onChanged: (v) async {
-              haptics.isEnabled = v;
-              await replace(s.copyWith(hapticsEnabled: v), 'hapticsEnabled');
-            },
+          _SettingsTile(
+            child: SwitchListTile(
+              title: const Text(
+                Strings.settingsLargeText,
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              value: s.largeText,
+              activeColor: AppColors.accentGold,
+              onChanged: (v) async =>
+                  replace(s.copyWith(largeText: v), 'largeText'),
+            ),
           ),
-          SwitchListTile(
-            title: const Text(Strings.settingsReducedMotion,
-                style: TextStyle(color: AppColors.textPrimary)),
-            value: s.reducedMotion,
-            activeThumbColor: AppColors.accentGold,
-            onChanged: (v) async =>
-                replace(s.copyWith(reducedMotion: v), 'reducedMotion'),
+          const SizedBox(height: 20),
+          _SettingsTile(
+            danger: true,
+            child: ListTile(
+              leading: const Icon(
+                Icons.delete_forever,
+                color: AppColors.accentDanger,
+              ),
+              title: const Text(
+                Strings.settingsResetSave,
+                style: TextStyle(color: AppColors.accentDanger),
+              ),
+              onTap: () => _confirmReset(context, ref),
+            ),
           ),
-          SwitchListTile(
-            title: const Text(Strings.settingsLargeText,
-                style: TextStyle(color: AppColors.textPrimary)),
-            value: s.largeText,
-            activeThumbColor: AppColors.accentGold,
-            onChanged: (v) async =>
-                replace(s.copyWith(largeText: v), 'largeText'),
-          ),
-          const Divider(color: AppColors.outline),
-          ListTile(
-            leading: const Icon(Icons.delete_forever,
-                color: AppColors.accentDanger),
-            title: const Text(Strings.settingsResetSave,
-                style: TextStyle(color: AppColors.accentDanger)),
-            onTap: () => _confirmReset(context, ref),
+          const SizedBox(height: 24),
+          const Center(
+            child: Text(
+              'Developed by Kanban Studios · Awaiz Ahmed',
+              style: TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 11,
+                letterSpacing: 0.5,
+              ),
+            ),
           ),
         ],
       ),
@@ -118,5 +157,26 @@ class SettingsScreen extends ConsumerWidget {
     if (ok == true) {
       await ref.read(playerProfileProvider.notifier).reset();
     }
+  }
+}
+
+class _SettingsTile extends StatelessWidget {
+  const _SettingsTile({required this.child, this.danger = false});
+  final Widget child;
+  final bool danger;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: danger ? AppColors.accentDanger : AppColors.outline,
+        ),
+      ),
+      child: child,
+    );
   }
 }
