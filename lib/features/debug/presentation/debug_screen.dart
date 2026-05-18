@@ -5,6 +5,7 @@ import '../../../core/debug_flags.dart';
 import '../../../di/providers.dart';
 import '../../../domain/models/currency.dart';
 import '../../../presentation/theme/colors.dart';
+import '../../../presentation/widgets/screen_scaffold.dart';
 
 /// Developer-only cheats. Gated behind `kDebugMode` via [DebugFlags] —
 /// these call sites compile-out in release builds.
@@ -14,20 +15,22 @@ class DebugScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (!DebugFlags.cheatsEnabled) {
-      return const Scaffold(
-        backgroundColor: AppColors.background,
+      return const ScreenScaffold(
+        title: 'Debug',
         body: Center(
-          child: Text('Debug disabled in release builds',
-              style: TextStyle(color: AppColors.textMuted)),
+          child: Text(
+            'Debug disabled in release builds',
+            style: TextStyle(color: AppColors.textMuted),
+          ),
         ),
       );
     }
     final profile = ref.watch(playerProfileProvider);
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Debug cheats')),
+    return ScreenScaffold(
+      title: 'Debug cheats',
+      padding: EdgeInsets.zero,
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         children: [
           _Tile(
             label: 'Grant 10,000 coins',

@@ -10,6 +10,7 @@ import '../../../domain/models/department.dart';
 import '../../../l10n/strings_en.dart';
 import '../../../presentation/gameplay_copy.dart';
 import '../../../presentation/theme/colors.dart';
+import '../../../presentation/widgets/screen_background.dart';
 
 class MainMenuScreen extends ConsumerWidget {
   const MainMenuScreen({super.key});
@@ -27,8 +28,8 @@ class MainMenuScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // Atmospheric background stripes
-          const _BackgroundDecoration(),
+          // Atmospheric background stripes (shared across all screens)
+          const ScreenBackground(),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -202,50 +203,6 @@ class MainMenuScreen extends ConsumerWidget {
       ),
     );
   }
-}
-
-// ── Background decoration ────────────────────────────────────────────────────
-
-class _BackgroundDecoration extends StatelessWidget {
-  const _BackgroundDecoration();
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(painter: _BgPainter());
-  }
-}
-
-class _BgPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    // Subtle diagonal stripe pattern
-    final paint = Paint()
-      ..color = const Color(0x07F5C04A)
-      ..strokeWidth = 1;
-    for (double x = -size.height; x < size.width + size.height; x += 40) {
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x + size.height, size.height),
-        paint,
-      );
-    }
-
-    // Bottom glow
-    final glowRect =
-        Rect.fromLTWH(0, size.height * 0.6, size.width, size.height * 0.4);
-    canvas.drawRect(
-      glowRect,
-      Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-          colors: [Color(0x1AF5C04A), Color(0x00F5C04A)],
-        ).createShader(glowRect),
-    );
-  }
-
-  @override
-  bool shouldRepaint(_) => false;
 }
 
 // ── Sub-widgets ──────────────────────────────────────────────────────────────

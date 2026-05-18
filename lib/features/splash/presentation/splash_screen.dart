@@ -6,6 +6,7 @@ import '../../../app/app_router.dart';
 import '../../../di/providers.dart';
 import '../../../l10n/strings_en.dart';
 import '../../../presentation/theme/colors.dart';
+import '../../../presentation/widgets/screen_background.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -31,27 +32,38 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: AppColors.background,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.local_post_office,
-                color: AppColors.accentGold, size: 72),
-            SizedBox(height: 16),
-            Text(
-              Strings.appTitle,
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 26,
-                fontWeight: FontWeight.w700,
+      body: Stack(
+        children: const [
+          ScreenBackground(),
+          SafeArea(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.local_post_office,
+                    color: AppColors.accentGold,
+                    size: 80,
+                  ),
+                  SizedBox(height: 18),
+                  Text(
+                    Strings.appTitle,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 3,
+                    ),
+                  ),
+                  SizedBox(height: 24),
+                  CircularProgressIndicator(color: AppColors.accentGold),
+                ],
               ),
             ),
-            SizedBox(height: 24),
-            CircularProgressIndicator(color: AppColors.accentGold),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

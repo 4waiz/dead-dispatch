@@ -8,6 +8,7 @@ import '../../../l10n/strings_en.dart';
 import '../../../presentation/gameplay_copy.dart';
 import '../../../presentation/theme/colors.dart';
 import '../../../presentation/widgets/currency_chip.dart';
+import '../../../presentation/widgets/screen_scaffold.dart';
 import '../../../services/analytics_service.dart';
 
 class DepartmentScreen extends ConsumerWidget {
@@ -22,19 +23,12 @@ class DepartmentScreen extends ConsumerWidget {
 
     final all = progression.visibleDepartments(profile);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text(Strings.departmentsTitle),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: CurrencyChip(amount: profile.wallet.get(Currency.coins)),
-          ),
-        ],
-      ),
+    return ScreenScaffold(
+      title: Strings.departmentsTitle,
+      trailing: CurrencyChip(amount: profile.wallet.get(Currency.coins)),
+      padding: EdgeInsets.zero,
       body: ListView.separated(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         itemCount: all.length + 1,
         separatorBuilder: (_, __) => const SizedBox(height: 10),
         itemBuilder: (ctx, i) {
@@ -94,7 +88,7 @@ class _RestorationHeader extends StatelessWidget {
           SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Spend shift coins to restore rooms. Each restored room unlocks new parcels, upgrades, or rules.',
+              'Spend shift coins to restore rooms. Each restored room unlocks new block types, skins, or power-ups.',
               style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 13,

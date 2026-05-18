@@ -6,6 +6,7 @@ import '../../../domain/models/currency.dart';
 import '../../../l10n/strings_en.dart';
 import '../../../presentation/theme/colors.dart';
 import '../../../presentation/widgets/currency_chip.dart';
+import '../../../presentation/widgets/screen_scaffold.dart';
 import '../../../services/analytics_service.dart';
 
 class UpgradeScreen extends ConsumerWidget {
@@ -20,19 +21,12 @@ class UpgradeScreen extends ConsumerWidget {
 
     final items = balance.upgrades.values.toList();
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text(Strings.upgradesTitle),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: CurrencyChip(amount: profile.wallet.get(Currency.coins)),
-          ),
-        ],
-      ),
+    return ScreenScaffold(
+      title: Strings.upgradesTitle,
+      trailing: CurrencyChip(amount: profile.wallet.get(Currency.coins)),
+      padding: EdgeInsets.zero,
       body: ListView.separated(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         itemCount: items.length,
         separatorBuilder: (_, __) => const SizedBox(height: 10),
         itemBuilder: (ctx, i) {
@@ -54,9 +48,11 @@ class UpgradeScreen extends ConsumerWidget {
             onBuy: !canAfford
                 ? null
                 : () {
-                    final ok = economy.purchaseUpgrade(profile, kind: desc.kind);
+                    final ok =
+                        economy.purchaseUpgrade(profile, kind: desc.kind);
                     if (ok) {
-                      ref.read(playerProfileProvider.notifier)
+                      ref
+                          .read(playerProfileProvider.notifier)
                           .mutate((_) {});
                       ref.read(playerProfileProvider.notifier).persist();
                       analytics.logEvent(

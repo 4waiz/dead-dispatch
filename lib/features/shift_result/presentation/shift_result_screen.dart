@@ -13,6 +13,7 @@ import '../../../l10n/strings_en.dart';
 import '../../../presentation/gameplay_copy.dart';
 import '../../../presentation/theme/colors.dart';
 import '../../../presentation/widgets/primary_button.dart';
+import '../../../presentation/widgets/screen_scaffold.dart';
 import '../../../services/ads_service.dart';
 import '../../../services/analytics_service.dart';
 
@@ -102,13 +103,13 @@ class _ShiftResultScreenState extends ConsumerState<ShiftResultScreen> {
     final nextRooms = progression.nextRestorableDepartments(profile);
     final nextRoom = nextRooms.isEmpty ? null : nextRooms.first;
     final coins = profile.wallet.get(Currency.coins);
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text(Strings.gameOverTitle)),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
+    return ScreenScaffold(
+      title: Strings.gameOverTitle,
+      showBack: false,
+      padding: EdgeInsets.zero,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+        child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _StatCard(label: 'Score', value: '${r.score}'),
@@ -160,7 +161,6 @@ class _ShiftResultScreenState extends ConsumerState<ShiftResultScreen> {
             ],
           ),
         ),
-      ),
     );
   }
 }

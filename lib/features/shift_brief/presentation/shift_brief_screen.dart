@@ -9,6 +9,7 @@ import '../../../domain/models/hazard.dart';
 import '../../../domain/models/shift_config.dart';
 import '../../../presentation/gameplay_copy.dart';
 import '../../../presentation/theme/colors.dart';
+import '../../../presentation/widgets/screen_background.dart';
 
 /// Pre-shift "Ready?" panel. Slim and information-dense: the target
 /// score, the blocks you'll see today, and (for Daily Seal) the active
@@ -30,7 +31,7 @@ class ShiftBriefScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          const _BriefBg(),
+          const ScreenBackground(),
           SafeArea(
             child: Column(
               children: [
@@ -264,48 +265,6 @@ class _ModifierCard extends StatelessWidget {
       ),
     );
   }
-}
-
-// ── Background ────────────────────────────────────────────────────────────────
-
-class _BriefBg extends StatelessWidget {
-  const _BriefBg();
-  @override
-  Widget build(BuildContext context) => CustomPaint(painter: _BgPainter());
-}
-
-class _BgPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0x05F5C04A)
-      ..strokeWidth = 1;
-    for (double x = -size.height; x < size.width + size.height; x += 32) {
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x + size.height, size.height),
-        paint,
-      );
-    }
-    final glowRect = Rect.fromLTWH(
-      0,
-      size.height * 0.7,
-      size.width,
-      size.height * 0.3,
-    );
-    canvas.drawRect(
-      glowRect,
-      Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-          colors: [Color(0x14F5C04A), Color(0x00F5C04A)],
-        ).createShader(glowRect),
-    );
-  }
-
-  @override
-  bool shouldRepaint(_) => false;
 }
 
 // ── Sub-widgets ───────────────────────────────────────────────────────────────
