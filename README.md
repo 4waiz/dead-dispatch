@@ -248,3 +248,11 @@ flutter build apk --release   # verify no Debug tile on the menu
 ## Status
 
 Block-puzzle pivot complete: Classic Shift + Daily Seal end-to-end, full menu chain, persistence, deterministic dailies, Stamp Blast + Ghost Swap. Real AdMob / Firebase / final art + audio are flavor-gated TODOs at [lib/di/providers.dart](lib/di/providers.dart).
+
+---
+
+## Developers
+
+**Developed by Kanban Studios**
+
+**Developer:** Awaiz Ahmed

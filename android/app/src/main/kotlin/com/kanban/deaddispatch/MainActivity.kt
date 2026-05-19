@@ -1,4 +1,4 @@
-package com.example.dead_dispatch
+package com.kanban.deaddispatch
 
 import io.flutter.embedding.android.FlutterActivity
 
